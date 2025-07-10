@@ -1,181 +1,133 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useAttendanceStore } from '@/stores/attendance'
 
 const store = useAttendanceStore()
-const fileInput = ref(null)
 
-// --- 시급 설정을 위한 로직 ---
-const hourlyRate = computed({
-  get: () => store.hourlyRate,
-  set: (value) => store.updateHourlyRate(Number(value)),
+// 태그 생성용 상태 변수들
+const newTag = ref({
+  name: '',
+  color: '#42b883',
+  baseRate: 1000,
+  nightRate: 1500,
+  weekendRate: 1500,
 })
-
-// --- 할증 설정을 위한 로직 ---
-const isWeekendEnabled = computed({
-  get: () => store.bonusSettings.isWeekendEnabled,
-  set: (value) => store.updateBonusSettings({ isWeekendEnabled: value }),
-})
-const weekendRate = computed({
-  get: () => store.bonusSettings.weekendRate,
-  set: (value) => store.updateBonusSettings({ weekendRate: Number(value) }),
-})
-const isNightEnabled = computed({
-  get: () => store.bonusSettings.isNightEnabled,
-  set: (value) => store.updateBonusSettings({ isNightEnabled: value }),
-})
-const nightRate = computed({
-  get: () => store.bonusSettings.nightRate,
-  set: (value) => store.updateBonusSettings({ nightRate: Number(value) }),
-})
-
-// --- 태그 생성을 위한 로직 ---
-const newTagName = ref('')
-const newTagColor = ref('#42b883')
 
 const handleAddTag = () => {
-  if (newTagName.value) {
-    store.addTag({ name: newTagName.value, color: newTagColor.value })
-    newTagName.value = ''
+  if (newTag.value.name) {
+    store.addTag({ ...newTag.value })
+    // 입력 필드 초기화
+    newTag.value.name = ''
   }
 }
 
-// ✨ 내보내기 버튼을 위한 핸들러 추가
-const handleExport = () => {
-  store.exportUserData()
-}
-
-// ✨ 파일 가져오기를 위한 핸들러 추가
-const handleImport = () => {
-  const file = fileInput.value.files[0]
-  if (!file) {
-    alert('파일을 선택해주세요.')
-    return
-  }
-
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    store.importUserData(event.target.result)
-  }
-  reader.readAsText(file)
+// 태그의 시급 정보를 업데이트하는 함수
+const handleRateUpdate = (tag, field, value) => {
+  store.updateTag({
+    id: tag.id,
+    [field]: Number(value),
+  })
 }
 </script>
 
 <template>
   <div class="container">
-    <div class="section">
-      <h3>💾 데이터 관리</h3>
-      <div class="input-group">
-        <button @click="handleExport">데이터 내보내기 (JSON)</button>
-      </div>
-      <p class="description">현재 사용자의 모든 기록과 설정을 JSON 파일로 저장합니다.</p>
+    <h3># 직장(태그)별 설정</h3>
 
-      <div class="input-group import-group">
-        <input type="file" ref="fileInput" accept=".json" />
-        <button @click="handleImport">데이터 가져오기</button>
-      </div>
-      <p class="description">JSON 파일로부터 데이터를 불러옵니다. 현재 데이터는 덮어씌워집니다.</p>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="section">
-      <h3>⚙️ 설정</h3>
-      <div class="setting-group">
-        <label for="hourly-rate">시급:</label>
-        <input id="hourly-rate" type="number" v-model="hourlyRate" /> 원
-      </div>
-      <div class="setting-group">
-        <label>
-          <input type="checkbox" v-model="isWeekendEnabled" />
-          주말 할증 (토/일)
-        </label>
-        <input type="number" v-model="weekendRate" step="0.1" :disabled="!isWeekendEnabled" /> 배
-      </div>
-      <div class="setting-group">
-        <label>
-          <input type="checkbox" v-model="isNightEnabled" />
-          야간 할증 (22시-06시)
-        </label>
-        <input type="number" v-model="nightRate" step="0.1" :disabled="!isNightEnabled" /> 배
-      </div>
-    </div>
-
-    <div class="section">
-      <h3># 태그 생성</h3>
-      <div class="input-group tag-creator">
-        <input type="text" v-model="newTagName" placeholder="태그 이름 (예: 근무지 A)" />
-        <input type="color" v-model="newTagColor" />
-        <button @click="handleAddTag">태그 추가</button>
-      </div>
-      <div class="tag-list">
-        <span
-          v-for="tag in store.tags"
-          :key="tag.id"
-          class="tag-badge"
-          :style="{ backgroundColor: tag.color }"
+    <div
+      v-for="tag in store.tags"
+      :key="tag.id"
+      class="tag-editor-item"
+      :style="{ borderLeftColor: tag.color }"
+    >
+      <div class="tag-name">{{ tag.name }}</div>
+      <div class="rate-inputs">
+        <label
+          >기본:
+          <input
+            type="number"
+            :value="tag.baseRate"
+            @input="handleRateUpdate(tag, 'baseRate', $event.target.value)"
+          />
+          원</label
         >
-          {{ tag.name }}
-        </span>
+        <label
+          >야간:
+          <input
+            type="number"
+            :value="tag.nightRate"
+            @input="handleRateUpdate(tag, 'nightRate', $event.target.value)"
+          />
+          원</label
+        >
+        <label
+          >주말:
+          <input
+            type="number"
+            :value="tag.weekendRate"
+            @input="handleRateUpdate(tag, 'weekendRate', $event.target.value)"
+          />
+          원</label
+        >
       </div>
+    </div>
+
+    <div class="section new-tag-section">
+      <h4>새 직장(태그) 추가</h4>
+      <input type="text" v-model="newTag.name" placeholder="직장 이름" />
+      <input type="color" v-model="newTag.color" />
+      <div class="rate-inputs">
+        <label>기본 시급: <input type="number" v-model="newTag.baseRate" /> 원</label>
+        <label>야간 시급: <input type="number" v-model="newTag.nightRate" /> 원</label>
+        <label>주말 시급: <input type="number" v-model="newTag.weekendRate" /> 원</label>
+      </div>
+      <button @click="handleAddTag">추가</button>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* 여기에 필요한 스타일을 추가합니다. */
 .container {
   padding: 10px;
 }
-.section {
-  margin-bottom: 25px;
+h3,
+h4 {
+  margin-bottom: 15px;
 }
-h3 {
+.tag-editor-item {
+  border-left: 5px solid;
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+.tag-name {
+  font-weight: bold;
   margin-bottom: 10px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
 }
-.setting-group,
-.input-group {
+.rate-inputs {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.rate-inputs label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 5px;
+  font-size: 14px;
 }
-input[type='number'] {
-  width: 70px;
+.rate-inputs input {
+  width: 80px;
 }
-input {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.new-tag-section {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
 }
-button {
-  padding: 8px 15px;
-  border: none;
-  background-color: #42b883;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
+.new-tag-section > input[type='text'] {
+  margin-right: 10px;
 }
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 15px;
-}
-.tag-badge {
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-}
-.description {
-  font-size: 12px;
-  color: #666;
-  margin-top: 8px;
-}
-.import-group {
-  margin-top: 15px;
+.new-tag-section .rate-inputs {
+  margin: 10px 0;
 }
 </style>
