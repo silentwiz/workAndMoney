@@ -32,7 +32,7 @@ const handleRateUpdate = (tag, field, value) => {
 
 <template>
   <div class="container">
-    <h3># 직장(태그)별 설정</h3>
+    <h3># 職場設定</h3>
 
     <div
       v-for="tag in store.tags"
@@ -43,45 +43,45 @@ const handleRateUpdate = (tag, field, value) => {
       <div class="tag-name">{{ tag.name }}</div>
       <div class="rate-inputs">
         <label
-          >기본:
+          >基本:
           <input
             type="number"
             :value="tag.baseRate"
             @input="handleRateUpdate(tag, 'baseRate', $event.target.value)"
           />
-          원</label
+          円</label
         >
         <label
-          >야간:
+          >夜間:
           <input
             type="number"
             :value="tag.nightRate"
             @input="handleRateUpdate(tag, 'nightRate', $event.target.value)"
           />
-          원</label
+          円</label
         >
         <label
-          >주말:
+          >週末:
           <input
             type="number"
             :value="tag.weekendRate"
             @input="handleRateUpdate(tag, 'weekendRate', $event.target.value)"
           />
-          원</label
+          円</label
         >
       </div>
     </div>
 
     <div class="section new-tag-section">
-      <h4>새 직장(태그) 추가</h4>
-      <input type="text" v-model="newTag.name" placeholder="직장 이름" />
+      <h4>職場追加</h4>
+      <input type="text" v-model="newTag.name" placeholder="職場名" />
       <input type="color" v-model="newTag.color" />
       <div class="rate-inputs">
-        <label>기본 시급: <input type="number" v-model="newTag.baseRate" /> 원</label>
-        <label>야간 시급: <input type="number" v-model="newTag.nightRate" /> 원</label>
-        <label>주말 시급: <input type="number" v-model="newTag.weekendRate" /> 원</label>
+        <label>基本時給: <input type="number" v-model="newTag.baseRate" /> 円</label>
+        <label>夜間時給: <input type="number" v-model="newTag.nightRate" /> 円</label>
+        <label>週末時給: <input type="number" v-model="newTag.weekendRate" /> 円</label>
       </div>
-      <button @click="handleAddTag">추가</button>
+      <button @click="handleAddTag">追加</button>
     </div>
   </div>
 </template>

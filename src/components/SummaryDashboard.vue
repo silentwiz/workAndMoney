@@ -16,11 +16,11 @@ const formatCurrency = (value) => {
 <template>
   <div class="dashboard">
     <div class="summary-card">
-      <h4>이번 주 예상 수입</h4>
+      <h4>今週の予想収入</h4>
       <p>{{ formatCurrency(store.weeklyWage) }}</p>
     </div>
     <div class="summary-card">
-      <h4>이번 달 예상 수입</h4>
+      <h4>今月の予想収入</h4>
       <p>{{ formatCurrency(store.monthlyWage) }}</p>
     </div>
   </div>

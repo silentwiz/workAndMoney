@@ -14,7 +14,7 @@ const formatCurrency = (value) => {
 
 <template>
   <div class="log-list-container">
-    <h2>근무 기록</h2>
+    <h2>記録</h2>
     <ul>
       <li v-for="log in store.attendanceLogs" :key="log.id">
         <div class="log-details">
@@ -22,14 +22,14 @@ const formatCurrency = (value) => {
           <span class="tag-badge" :style="{ backgroundColor: store.getTagById(log.tagId)?.color }">
             {{ store.getTagById(log.tagId)?.name || '태그 없음' }}
           </span>
-          <span>{{ log.start }} ~ {{ log.end }} ({{ log.workedHours.toFixed(2) }}시간)</span>
+          <span>{{ log.start }} ~ {{ log.end }} ({{ log.workedHours.toFixed(2) }}時間)</span>
         </div>
         <div class="log-wage">
           <strong>{{ formatCurrency(log.dailyWage) }}</strong>
         </div>
       </li>
     </ul>
-    <p v-if="store.attendanceLogs.length === 0">기록이 없습니다.</p>
+    <p v-if="store.attendanceLogs.length === 0">まだ記録がありません。</p>
   </div>
 </template>
 

@@ -13,8 +13,8 @@ const isSettingsModalOpen = ref(false)
 <template>
   <main>
     <div class="main-header">
-      <h1>근태 관리 시스템</h1>
-      <button class="settings-button" @click="isSettingsModalOpen = true">⚙️ 설정</button>
+      <h1>勤怠管理</h1>
+      <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
     </div>
 
     <SummaryDashboard />

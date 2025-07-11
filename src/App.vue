@@ -24,9 +24,10 @@ const handleLogout = () => {
   <div v-else>
     <header class="app-header">
       <span
-        ><strong>{{ currentUser }}</strong> 님, 환영합니다.</span
+        ><strong>{{ currentUser }}</strong
+        >さん、お疲れ様です！</span
       >
-      <button @click="handleLogout">로그아웃</button>
+      <button @click="handleLogout">ログアウト</button>
     </header>
     <RouterView />
   </div>

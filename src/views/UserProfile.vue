@@ -23,8 +23,8 @@ const selectUser = (username) => {
 <template>
   <div class="user-profile-container">
     <div class="card">
-      <h2>사용자 선택</h2>
-      <p>데이터를 불러올 사용자를 선택하거나, 새 사용자를 추가하세요.</p>
+      <h2>ログイン</h2>
+      <p>利用者を選択または追加してください、</p>
 
       <div class="user-list">
         <button v-for="user in users" :key="user" @click="selectUser(user)">
@@ -33,13 +33,8 @@ const selectUser = (username) => {
       </div>
 
       <div class="add-user-form">
-        <input
-          type="text"
-          v-model="newUsername"
-          placeholder="새 사용자 이름"
-          @keyup.enter="addUser"
-        />
-        <button @click="addUser">추가</button>
+        <input type="text" v-model="newUsername" placeholder="お名前" @keyup.enter="addUser" />
+        <button @click="addUser">利用者追加</button>
       </div>
     </div>
   </div>

@@ -19,7 +19,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
 
   const importUserData = (jsonData) => {
     if (!currentUser.value) {
-      alert('먼저 사용자를 선택해주세요.')
+      alert('利用者を選択してください。')
       return false
     }
     try {
@@ -27,7 +27,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
       if (userData.username && userData.username !== currentUser.value) {
         if (
           !confirm(
-            `JSON 파일의 사용자는 '${userData.username}'입니다. 현재 사용자 '${currentUser.value}'의 데이터를 덮어쓰시겠습니까?`,
+            `読み込んだデータの利用者は'${userData.username}'です。今設定された'${currentUser.value}'のデータに上書きしますか？`,
           )
         ) {
           return false
@@ -36,18 +36,18 @@ export const useAttendanceStore = defineStore('attendance', () => {
       // 불러온 데이터로 교체 (rate, settings는 tags에 포함되어 있음)
       attendanceLogs.value = userData.logs || []
       tags.value = userData.tags || []
-      alert('데이터를 성공적으로 불러왔습니다.')
+      alert('データを読み込みました。')
       return true
     } catch (error) {
-      alert('유효하지 않은 JSON 파일입니다.')
-      console.error('JSON 파싱 에러:', error)
+      alert('間違ったデータです。')
+      console.error('データ読み込みエラー:', error)
       return false
     }
   }
 
   const exportUserData = () => {
     if (!currentUser.value) {
-      alert('사용자가 선택되지 않았습니다.')
+      alert('利用者が選択されていません。')
       return
     }
     // rate, settings 정보가 포함된 tags 배열을 내보냄
@@ -186,7 +186,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
         const tag = getTagById.value(parseInt(tagId))
         return {
           tagId: tagId,
-          tagName: tag ? tag.name : '태그 없음',
+          tagName: tag ? tag.name : 'no_tag',
           tagColor: tag ? tag.color : '#888',
           totalWage: totalWage,
         }

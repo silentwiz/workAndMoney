@@ -52,17 +52,17 @@ const handleSubmit = () => {
     })
     emit('close') // 저장 후 모달 닫기 이벤트 발생
   } else {
-    alert('시간과 태그를 모두 선택해주세요.')
+    alert('職場と勤務時間を入力してください')
   }
 }
 </script>
 
 <template>
   <div>
-    <h3>{{ formattedDate }} 근무 기록</h3>
+    <h3>{{ formattedDate }}の出勤記録</h3>
     <div class="log-editor-form">
       <select v-model="selectedTagId">
-        <option :value="null" disabled>태그 선택</option>
+        <option :value="null" disabled>職場選択</option>
         <option v-for="tag in store.tags" :key="tag.id" :value="tag.id">
           {{ tag.name }}
         </option>
@@ -70,7 +70,7 @@ const handleSubmit = () => {
       <input type="time" v-model="startTime" />
       <span>~</span>
       <input type="time" v-model="endTime" />
-      <button @click="handleSubmit">저장</button>
+      <button @click="handleSubmit">保存</button>
     </div>
   </div>
 </template>

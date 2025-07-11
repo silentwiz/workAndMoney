@@ -7,17 +7,17 @@ const emit = defineEmits(['edit-log', 'add-new', 'delete-log']) // 수정 또는
 
 <template>
   <div class="viewer-container">
-    <h3>기록 목록</h3>
+    <h3>記録</h3>
     <ul class="log-list">
       <li v-for="log in logs" :key="log.id">
         <span>{{ log.start }} - {{ log.end }}</span>
         <div class="buttons">
-          <button @click="emit('edit-log', log)">수정</button>
-          <button class="delete-btn" @click="emit('delete-log', log.id)">삭제</button>
+          <button @click="emit('edit-log', log)">修正</button>
+          <button class="delete-btn" @click="emit('delete-log', log.id)">削除</button>
         </div>
       </li>
     </ul>
-    <button class="add-new-btn" @click="emit('add-new')">이 날짜에 새 기록 추가</button>
+    <button class="add-new-btn" @click="emit('add-new')">新しい記録追加</button>
   </div>
 </template>
 

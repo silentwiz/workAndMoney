@@ -18,7 +18,7 @@ const editingLog = ref(null) // 편집할 특정 로그
 const calendarViewDate = computed(() => store.viewedDate)
 
 const onDeleteLog = (logId) => {
-  if (confirm('이 기록을 정말 삭제하시겠습니까?')) {
+  if (confirm('この記録を削除しますか？')) {
     store.deleteLog(logId)
     // 목록이 변경되었으므로 모달을 닫음
     isModalOpen.value = false
