@@ -113,12 +113,12 @@ h2 {
 .col-modified {
   flex: 2;
   text-align: left;
-  font-size: 10px;
+  font-size: 0.9em;
   color: #666;
 }
 .col-date {
   flex: 1.2;
-  font-size: 10px;
+  font-size: 0.9em;
   text-align: center;
 }
 .col-tag {
@@ -127,18 +127,20 @@ h2 {
 }
 .col-time {
   flex: 2;
+  font-size: 0.8em;
   text-align: center;
 }
 .col-wage {
   flex: 1.2;
   text-align: right;
   font-weight: bold;
+  font-size: 1em;
 }
 .tag-badge {
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 0.75em;
   font-weight: bold;
   display: inline-block;
 }
@@ -188,7 +190,7 @@ h2 {
     justify-content: flex-end; /* 태그와 수입은 오른쪽 정렬 */
   }
   .col-wage strong {
-    font-size: 1.1em;
+    font-size: 0.75em;
   }
 }
 </style>
