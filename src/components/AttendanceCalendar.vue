@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useAttendanceStore } from '@/stores/attendance'
 import BaseModal from './BaseModal.vue'
 import LogEditor from './LogEditor.vue'
@@ -31,22 +31,6 @@ const handlePageUpdate = (pages) => {
     store.setViewedDate(pages[0].viewDate)
   }
 }
-
-// --- ✨ 태그별 월급 표시 로직 추가 시작 ✨ ---
-
-// 1. 태그별 수입 데이터를 담을 로컬 ref를 생성합니다.
-const wageDetails = ref([])
-
-// 2. 스토어의 데이터가 바뀔 때마다, 그 결과를 로컬 ref에 복사합니다.
-watch(
-  () => store.viewedMonthWageByTag,
-  (newValue) => {
-    wageDetails.value = newValue
-  },
-  { immediate: true },
-) // immediate: true는 처음 한번 즉시 실행하는 옵션
-
-// --- ✨ 태그별 월급 표시 로직 추가 끝 ✨ ---
 
 // 숫자 포맷 함수
 const formatCurrency = (value) => {
@@ -118,21 +102,11 @@ const attributes = computed(() => {
 <template>
   <div class="calendar-container">
     <div class="header-bar">
-      <h2>근무 달력</h2>
+      <h2></h2>
       <div v-if="calendarViewDate" class="viewed-month-wage">
         {{ calendarViewDate.getFullYear() }}년 {{ calendarViewDate.getMonth() + 1 }}월 총 수입:
         <strong>{{ formatCurrency(store.viewedMonthWage) }}</strong>
       </div>
-    </div>
-
-    <div v-if="wageDetails.length > 0" class="tag-wage-details">
-      <ul>
-        <li v-for="item in wageDetails" :key="item.tagId">
-          <span class="tag-indicator" :style="{ backgroundColor: item.tagColor }"></span>
-          <span>{{ item.tagName }}:</span>
-          <strong>{{ formatCurrency(item.totalWage) }}</strong>
-        </li>
-      </ul>
     </div>
 
     <VCalendar

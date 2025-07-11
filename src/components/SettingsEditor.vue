@@ -32,7 +32,7 @@ const handleRateUpdate = (tag, field, value) => {
 
 <template>
   <div class="container">
-    <h3># 職場設定</h3>
+    <h3>職場設定</h3>
 
     <div
       v-for="tag in store.tags"

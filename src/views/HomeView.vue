@@ -5,6 +5,7 @@ import AttendanceCalendar from '@/components/AttendanceCalendar.vue'
 import LogList from '@/components/LogList.vue'
 import BaseModal from '@/components/BaseModal.vue' // 모달 컴포넌트 import
 import SettingsEditor from '@/components/SettingsEditor.vue' // 이름 바꾼 설정 에디터 import
+import TagSummary from '@/components/TagSummary.vue'
 
 // 설정 모달의 열림/닫힘 상태를 관리합니다.
 const isSettingsModalOpen = ref(false)
@@ -18,9 +19,9 @@ const isSettingsModalOpen = ref(false)
     </div>
 
     <SummaryDashboard />
+    <TagSummary />
     <AttendanceCalendar />
     <LogList />
-
     <BaseModal :show="isSettingsModalOpen" @close="isSettingsModalOpen = false">
       <SettingsEditor />
     </BaseModal>
