@@ -12,7 +12,6 @@ const newTag = ref({
   nightRate: 1500,
   weekendRate: 1500,
 })
-const fileInput = ref(null)
 
 const handleAddTag = () => {
   if (newTag.value.name) {
@@ -28,24 +27,6 @@ const handleRateUpdate = (tag, field, value) => {
     id: tag.id,
     [field]: Number(value),
   })
-}
-
-// 데이터 내보내기/가져오기 핸들러
-const handleExport = () => {
-  store.exportUserData()
-}
-
-const handleImport = () => {
-  const file = fileInput.value.files[0]
-  if (!file) {
-    alert('파일을 선택해주세요.')
-    return
-  }
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    store.importUserData(event.target.result)
-  }
-  reader.readAsText(file)
 }
 </script>
 
@@ -101,20 +82,6 @@ const handleImport = () => {
         <label>週末時給: <input type="number" v-model="newTag.weekendRate" /> 円</label>
       </div>
       <button @click="handleAddTag">追加</button>
-    </div>
-
-    <div class="section">
-      <h3>💾データ管理</h3>
-      <div class="input-group">
-        <button @click="handleExport">データ保存</button>
-      </div>
-      <p class="description">現在のデータを保存します。</p>
-
-      <div class="input-group import-group">
-        <input type="file" ref="fileInput" accept=".json" />
-        <button @click="handleImport">データ読み込み</button>
-      </div>
-      <p class="description">データを読み込みます。 ⚠️注意：データが上書きされます。</p>
     </div>
   </div>
 </template>

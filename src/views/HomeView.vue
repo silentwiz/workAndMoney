@@ -31,7 +31,7 @@ const isSettingsModalOpen = ref(false)
 <style scoped>
 main {
   padding: 20px;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 /* 새로운 스타일 추가 */

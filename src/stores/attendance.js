@@ -153,7 +153,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     const fullEndTime = `${date}T${logData.end}`
     const { totalWage, totalHours } = calculateWage(fullStartTime, fullEndTime, logData.tagId)
     const newLogData = { ...logData, workedHours: totalHours, dailyWage: totalWage }
-
+    newLogData.modifiedAt = new Date()
     if (existingLogIndex > -1) {
       attendanceLogs.value[existingLogIndex] = newLogData
     } else {
