@@ -163,6 +163,37 @@ export const useAttendanceStore = defineStore('attendance', () => {
   }
 
   // --- Getters / Computed ---
+
+  const viewedMonthWageByTag = computed(() => {
+    if (!viewedDate.value) return []
+
+    const year = viewedDate.value.getFullYear()
+    const month = viewedDate.value.getMonth() + 1
+    const targetMonthStr = `${year}-${String(month).padStart(2, '0')}`
+
+    const monthLogs = attendanceLogs.value.filter((log) => log.date.startsWith(targetMonthStr))
+
+    const wageByTag = {}
+    for (const log of monthLogs) {
+      if (!wageByTag[log.tagId]) {
+        wageByTag[log.tagId] = 0
+      }
+      wageByTag[log.tagId] += log.dailyWage
+    }
+
+    return Object.entries(wageByTag)
+      .map(([tagId, totalWage]) => {
+        const tag = getTagById.value(parseInt(tagId))
+        return {
+          tagId: tagId,
+          tagName: tag ? tag.name : '태그 없음',
+          tagColor: tag ? tag.color : '#888',
+          totalWage: totalWage,
+        }
+      })
+      .sort((a, b) => b.totalWage - a.totalWage)
+  })
+
   const getLogsByDate = computed(
     () => (dateStr) => attendanceLogs.value.filter((log) => log.date === dateStr),
   )
@@ -192,9 +223,13 @@ export const useAttendanceStore = defineStore('attendance', () => {
       .reduce((total, log) => total + log.dailyWage, 0)
   })
   const viewedMonthWage = computed(() => {
+    // ✨ 안전장치 추가: viewedDate가 없으면 0을 반환
+    if (!viewedDate.value) return 0
+
     const year = viewedDate.value.getFullYear()
     const month = viewedDate.value.getMonth() + 1
     const targetMonthStr = `${year}-${String(month).padStart(2, '0')}`
+
     return attendanceLogs.value
       .filter((log) => log.date.startsWith(targetMonthStr))
       .reduce((total, log) => total + log.dailyWage, 0)
@@ -236,5 +271,6 @@ export const useAttendanceStore = defineStore('attendance', () => {
     viewedMonthWage,
     exportUserData,
     importUserData,
+    viewedMonthWageByTag,
   }
 })

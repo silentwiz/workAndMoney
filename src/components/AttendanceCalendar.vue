@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAttendanceStore } from '@/stores/attendance'
 import BaseModal from './BaseModal.vue'
 import LogEditor from './LogEditor.vue'
@@ -31,6 +31,22 @@ const handlePageUpdate = (pages) => {
     store.setViewedDate(pages[0].viewDate)
   }
 }
+
+// --- ✨ 태그별 월급 표시 로직 추가 시작 ✨ ---
+
+// 1. 태그별 수입 데이터를 담을 로컬 ref를 생성합니다.
+const wageDetails = ref([])
+
+// 2. 스토어의 데이터가 바뀔 때마다, 그 결과를 로컬 ref에 복사합니다.
+watch(
+  () => store.viewedMonthWageByTag,
+  (newValue) => {
+    wageDetails.value = newValue
+  },
+  { immediate: true },
+) // immediate: true는 처음 한번 즉시 실행하는 옵션
+
+// --- ✨ 태그별 월급 표시 로직 추가 끝 ✨ ---
 
 // 숫자 포맷 함수
 const formatCurrency = (value) => {
@@ -75,19 +91,19 @@ const onEditLog = (log) => {
 
 // 달력의 dot 표시를 위한 attributes는 그대로 유지해야 합니다.
 const attributes = computed(() => {
-  // 1. 각 근무 기록(log)을 순회하며 개별 점(dot) 속성을 만듭니다.
+  // 각 근무 기록을 순회하며 개별 점(dot) 속성을 만듭니다.
   const logAttributes = store.attendanceLogs.map((log) => {
     const tag = store.getTagById(log.tagId)
     const [year, month, day] = log.date.split('-').map(Number)
 
     return {
-      key: log.id, // 각 기록의 고유 ID를 key로 사용
-      dot: tag ? tag.color : 'gray', // 점의 색상을 직접 지정
+      key: log.id,
+      dot: tag ? tag.color : 'gray', // 점의 색상을 지정
       dates: new Date(year, month - 1, day),
     }
   })
 
-  // 2. '오늘' 표시 속성과 합쳐서 최종 반환합니다.
+  // '오늘' 표시와 합쳐서 최종 반환
   return [
     {
       key: 'today',
@@ -104,9 +120,19 @@ const attributes = computed(() => {
     <div class="header-bar">
       <h2>근무 달력</h2>
       <div v-if="calendarViewDate" class="viewed-month-wage">
-        {{ calendarViewDate.getFullYear() }}년 {{ calendarViewDate.getMonth() + 1 }}월 수입:
+        {{ calendarViewDate.getFullYear() }}년 {{ calendarViewDate.getMonth() + 1 }}월 총 수입:
         <strong>{{ formatCurrency(store.viewedMonthWage) }}</strong>
       </div>
+    </div>
+
+    <div v-if="wageDetails.length > 0" class="tag-wage-details">
+      <ul>
+        <li v-for="item in wageDetails" :key="item.tagId">
+          <span class="tag-indicator" :style="{ backgroundColor: item.tagColor }"></span>
+          <span>{{ item.tagName }}:</span>
+          <strong>{{ formatCurrency(item.totalWage) }}</strong>
+        </li>
+      </ul>
     </div>
 
     <VCalendar
@@ -152,5 +178,32 @@ const attributes = computed(() => {
 }
 .viewed-month-wage strong {
   color: #2c3e50;
+}
+
+.tag-wage-details {
+  background-color: #f0f2f5;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+.tag-wage-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.tag-wage-details li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+.tag-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
 }
 </style>
