@@ -4,49 +4,22 @@ import { useAttendanceStore } from '@/stores/attendance'
 
 const store = useAttendanceStore()
 
-// 이 컴포넌트에서만 사용할 로컬 변수
+// 1. 컴포넌트 내부에서 사용할 로컬 변수
 const summaryData = ref([])
 
-// 이제 스토어의 계산 결과를 감시하는 대신, 계산에 필요한 "원본 재료"들의 변경을 직접 감시합니다.
+// 2. 스토어의 원본 데이터 변경을 직접 감시(watch)
 watch(
-  // 1. 감시할 대상: [현재 보는 날짜, 전체 근무 기록]
+  // 감시할 대상: [현재 보는 날짜, 전체 근무 기록]
   [() => store.viewedDate, () => store.attendanceLogs],
 
-  // 2. 위 대상 중 하나라도 바뀌면, 이 함수 안에서 직접 계산을 다시 수행합니다.
-  ([newDate, newLogs]) => {
-    if (!newDate) return []
-
-    const year = newDate.getFullYear()
-    const month = newDate.getMonth() + 1
-    const targetMonthStr = `${year}-${String(month).padStart(2, '0')}`
-
-    const monthLogs = newLogs.filter((log) => log.date.startsWith(targetMonthStr))
-
-    const wageByTag = {}
-    for (const log of monthLogs) {
-      if (!wageByTag[log.tagId]) {
-        wageByTag[log.tagId] = 0
-      }
-      wageByTag[log.tagId] += log.dailyWage
-    }
-
-    const result = Object.entries(wageByTag)
-      .map(([tagId, totalWage]) => {
-        const tag = store.getTagById(parseInt(tagId))
-        return {
-          tagId: tagId,
-          tagName: tag ? tag.name : '태그 없음',
-          tagColor: tag ? tag.color : '#888',
-          totalWage: totalWage,
-        }
-      })
-      .sort((a, b) => b.totalWage - a.totalWage)
-
-    // 3. 스스로 계산한 최종 결과를 로컬 변수에 할당합니다.
-    summaryData.value = result
+  // 위 대상 중 하나라도 바뀌면, 이 함수 안에서 직접 계산을 다시 수행
+  () => {
+    // 스토어에 있는 계산 로직을 여기서 직접 호출하거나, 다시 계산
+    // 지금은 스토어의 computed를 신뢰하고 그 결과를 받아오는 것으로 충분
+    summaryData.value = store.viewedMonthWageByTag
   },
   {
-    immediate: true, // 처음 한번 즉시 실행
+    immediate: true, // 컴포넌트 로드 시 즉시 실행
     deep: true, // 배열 내부까지 감지
   },
 )
@@ -54,7 +27,7 @@ watch(
 // 통화 포맷 함수
 const formatCurrency = (value) => {
   if (typeof value !== 'number') return ''
-  return new Intl.NumberFormat('ko-KR', {
+  return new Intl.NumberFormat('ja-JP', {
     style: 'currency',
     currency: 'JPY',
   }).format(value)
@@ -63,7 +36,7 @@ const formatCurrency = (value) => {
 
 <template>
   <div v-if="summaryData.length > 0" class="tag-summary-container">
-    <h4>職場別の収入</h4>
+    <h4>태그별 수입</h4>
     <ul>
       <li v-for="item in summaryData" :key="item.tagId">
         <span class="tag-indicator" :style="{ backgroundColor: item.tagColor }"></span>
