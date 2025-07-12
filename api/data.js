@@ -32,6 +32,7 @@ export default async function handler(request, response) {
       const blobResult = await put(filename, bodyString, {
         access: 'public',
         contentType: 'application/json',
+        allowOverwrite: true,
       })
 
       return response.status(200).json(blobResult)
