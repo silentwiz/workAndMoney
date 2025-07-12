@@ -1,5 +1,17 @@
-// Node.js 런타임의 표준 형식인 (request, response)를 사용합니다.
 import { put, list } from '@vercel/blob'
+
+// 요청 본문을 읽어오기 위한 헬퍼 함수
+function getBody(request) {
+  return new Promise((resolve) => {
+    let body = ''
+    request.on('data', (chunk) => {
+      body += chunk.toString()
+    })
+    request.on('end', () => {
+      resolve(body)
+    })
+  })
+}
 
 export default async function handler(request, response) {
   const { user } = request.query
@@ -8,20 +20,20 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: 'User parameter is required' })
   }
 
-  // ✨ 이 부분을 수정합니다 ✨
   const filename = `${encodeURIComponent(user)}.json`
 
   // POST 요청 (데이터 저장)
   if (request.method === 'POST') {
     try {
-      // ✨ Vercel의 Node.js 런타임은 request.body를 자동으로 자바스크립트 객체로 파싱해줍니다.
-      // 이 객체를 다시 JSON 문자열로 변환하여 Blob에 저장해야 합니다.
-      const bodyString = JSON.stringify(request.body, null, 2)
+      // 1. 요청 스트림에서 body를 수동으로 읽어옵니다.
+      const bodyString = await getBody(request)
 
+      // 2. 읽어온 body 문자열을 Vercel Blob에 저장합니다.
       const blobResult = await put(filename, bodyString, {
         access: 'public',
         contentType: 'application/json',
       })
+
       return response.status(200).json(blobResult)
     } catch (error) {
       return response.status(500).json({ error: `Failed to save data: ${error.message}` })
