@@ -1,18 +1,23 @@
 import { put, list } from '@vercel/blob'
 
-// Vercel의 공식적인 body 파싱 방법을 사용합니다.
-async function parseBody(request) {
-  try {
-    return await request.json()
-  } catch (e) {
-    return null
-  }
+// 요청 본문을 읽어오기 위한 헬퍼 함수
+function getBody(request) {
+  return new Promise((resolve, reject) => {
+    let body = ''
+    request.on('data', (chunk) => {
+      body += chunk.toString()
+    })
+    request.on('end', () => {
+      resolve(body)
+    })
+    request.on('error', (err) => {
+      reject(err)
+    })
+  })
 }
 
 export default async function handler(request, response) {
-  // URL에서 쿼리 파라미터를 가져옵니다.
-  const { searchParams } = new URL(request.url, `https://${request.headers.host}`)
-  const user = searchParams.get('user')
+  const { user } = request.query
 
   if (!user) {
     return response.status(400).json({ error: 'User parameter is required' })
@@ -22,22 +27,22 @@ export default async function handler(request, response) {
 
   if (request.method === 'POST') {
     try {
-      // 1. 요청 본문을 안전하게 파싱합니다.
-      const jsonData = await parseBody(request)
-      if (jsonData === null) {
-        throw new Error('Invalid JSON body')
-      }
-
-      // 2. 파싱된 자바스크립트 객체를 다시 문자열로 변환하여 저장합니다.
-      const bodyString = JSON.stringify(jsonData, null, 2)
+      const bodyString = await getBody(request)
 
       const blobResult = await put(filename, bodyString, {
         access: 'public',
         contentType: 'application/json',
       })
+
       return response.status(200).json(blobResult)
     } catch (error) {
-      return response.status(500).json({ error: `Failed to save data: ${error.message}` })
+      // ✨ 서버에서 발생한 실제 에러 메시지를 응답에 포함시킵니다.
+      console.error('--- SAVE ERROR ---', error)
+      return response.status(500).json({
+        message: 'Failed to save data due to an internal error.',
+        // 에러의 상세 내용을 클라이언트에서도 볼 수 있도록 전달
+        errorDetails: error.message,
+      })
     }
   } else {
     // GET 요청
@@ -58,7 +63,11 @@ export default async function handler(request, response) {
 
       return response.status(200).json(data)
     } catch (error) {
-      return response.status(500).json({ error: `Failed to read data: ${error.message}` })
+      console.error('--- READ ERROR ---', error)
+      return response.status(500).json({
+        message: 'Failed to read data.',
+        errorDetails: error.message,
+      })
     }
   }
 }
