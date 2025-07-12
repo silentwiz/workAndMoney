@@ -1,11 +1,13 @@
-import { put, list } from '@vercel/blob' // ✨ import 'download' 대신 'list'를 사용
+import { put, list } from '@vercel/blob'
+import fs from 'fs/promises' // fs/promises를 사용하면 더 깔끔합니다.
+import path from 'path'
 
-export default async function handler(request) {
-  const { searchParams } = new URL(request.url, `https://${request.headers.host}`)
-  const user = searchParams.get('user')
+// Node.js 런타임의 표준 형식인 (request, response)를 사용합니다.
+export default async function handler(request, response) {
+  const { user } = request.query
 
   if (!user) {
-    return new Response(JSON.stringify({ error: 'User parameter is required' }), { status: 400 })
+    return response.status(400).json({ error: 'User parameter is required' })
   }
 
   const filename = `${user}.json`
@@ -13,48 +15,33 @@ export default async function handler(request) {
   // POST 요청 (데이터 저장)
   if (request.method === 'POST') {
     try {
-      const blob = await put(filename, request.body, {
+      // Vercel의 body 파서는 JSON을 객체로 변환해주므로, 다시 문자열로 만듭니다.
+      const bodyString = JSON.stringify(request.body, null, 2)
+      const blob = await put(filename, bodyString, {
         access: 'public',
         contentType: 'application/json',
-        // 'add-random-suffix': false // 필요 시 파일 이름에 무작위 문자열이 붙는 것을 방지
       })
-      return new Response(JSON.stringify(blob), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return response.status(200).json(blob)
     } catch (error) {
-      return new Response(JSON.stringify({ error: `Failed to save data: ${error.message}` }), {
-        status: 500,
-      })
+      return response.status(500).json({ error: `Failed to save data: ${error.message}` })
     }
   }
   // GET 요청 (데이터 불러오기)
   else {
     try {
-      // 1. list 함수로 파일 이름에 해당하는 파일을 찾습니다.
       const { blobs } = await list({ prefix: filename, limit: 1 })
 
-      // 2. 파일이 존재하지 않으면, 비어있는 기본 데이터를 반환합니다.
       if (blobs.length === 0) {
-        return new Response(JSON.stringify({ logs: [], tags: [] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
+        return response.status(200).json({ logs: [], tags: [] })
       }
 
-      // 3. 찾은 파일의 URL로 fetch 요청을 보내 실제 내용을 가져옵니다.
       const fileUrl = blobs[0].url
       const fileResponse = await fetch(fileUrl)
       const data = await fileResponse.json()
 
-      return new Response(JSON.stringify(data), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return response.status(200).json(data)
     } catch (error) {
-      return new Response(JSON.stringify({ error: `Failed to read data: ${error.message}` }), {
-        status: 500,
-      })
+      return response.status(500).json({ error: `Failed to read data: ${error.message}` })
     }
   }
 }
