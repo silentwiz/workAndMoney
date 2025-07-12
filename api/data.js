@@ -1,6 +1,6 @@
+// Node.js 런타임의 표준 형식인 (request, response)를 사용합니다.
 import { put, list } from '@vercel/blob'
 
-// Node.js 런타임의 표준 형식인 (request, response)를 사용합니다.
 export default async function handler(request, response) {
   const { user } = request.query
 
@@ -8,7 +8,8 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: 'User parameter is required' })
   }
 
-  const filename = `${user}.json`
+  // ✨ 이 부분을 수정합니다 ✨
+  const filename = `${encodeURIComponent(user)}.json`
 
   // POST 요청 (데이터 저장)
   if (request.method === 'POST') {
