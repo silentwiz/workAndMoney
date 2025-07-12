@@ -24,8 +24,7 @@ const selectUser = (username) => {
   <div class="user-profile-container">
     <div class="card">
       <h2>ログイン</h2>
-      <p>利用者番号を選択または追加してください、</p>
-      <br />他人がわからない番号にしてください。
+      <p>利用者を選択または追加してください、</p>
 
       <div class="user-list">
         <button v-for="user in users" :key="user" @click="selectUser(user)">
