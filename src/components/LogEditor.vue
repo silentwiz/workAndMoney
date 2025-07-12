@@ -15,6 +15,7 @@ const startTime = ref('')
 const endTime = ref('')
 const selectedTagId = ref(null)
 const logId = ref(null)
+const restMinutes = ref(60)
 
 watchEffect(() => {
   if (props.logData) {
@@ -22,12 +23,14 @@ watchEffect(() => {
     startTime.value = props.logData.start
     endTime.value = props.logData.end
     selectedTagId.value = props.logData.tagId
+    restMinutes.value = props.logData.restMinutes || 0
     logId.value = props.logData.id
   } else {
     // 추가 모드: 폼을 기본값으로 리셋
     startTime.value = '09:00'
     endTime.value = '18:00'
     selectedTagId.value = null
+    restMinutes.value = 60
     logId.value = null
   }
 })
@@ -49,6 +52,7 @@ const handleSubmit = () => {
       start: startTime.value,
       end: endTime.value,
       tagId: selectedTagId.value,
+      restMinutes: Number(restMinutes.value),
     })
     emit('close') // 저장 후 모달 닫기 이벤트 발생
   } else {
@@ -70,6 +74,11 @@ const handleSubmit = () => {
       <input type="time" v-model="startTime" />
       <span>~</span>
       <input type="time" v-model="endTime" />
+      <div class="rest-input">
+        <label for="rest-time">休憩</label>
+        <input id="rest-time" type="number" v-model="restMinutes" min="0" step="15" />
+        <span>分</span>
+      </div>
       <button @click="handleSubmit">保存</button>
     </div>
   </div>
@@ -95,5 +104,29 @@ button {
   background-color: #42b883;
   color: white;
   border-radius: 4px;
+}
+.rest-input {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #ccc;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+.rest-input input {
+  border: none;
+  width: 50px;
+  text-align: right;
+  padding: 8px 0;
+}
+.rest-input label {
+  font-size: 14px;
+  color: #555;
+}
+/* Chrome/Safari에서 number input의 화살표 제거 */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 </style>

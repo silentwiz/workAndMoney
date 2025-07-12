@@ -143,7 +143,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
-  const calculateWage = (start, end, tagId) => {
+  const calculateWage = (start, end, tagId, restMinutes = 0) => {
     const tag = tags.value.find((t) => t.id === tagId)
     if (!tag) return { totalWage: 0, totalHours: 0 }
 
@@ -155,19 +155,21 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
 
     const totalHours = totalMinutes / 60
+
+    // ✨ 휴식 시간이 총 근무시간보다 길 경우 0으로 처리
+    const payableMinutes = Math.max(0, totalMinutes - restMinutes)
+
     let totalWage = 0
     let currentMinute = new Date(startDate)
 
+    // 총 근무 시간(totalMinutes)만큼 루프를 돌며 각 분의 시급을 먼저 계산
     for (let i = 0; i < totalMinutes; i++) {
       const dayOfWeek = currentMinute.getDay()
       const hour = currentMinute.getHours()
-
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
       const isNight = hour >= 22 || hour < 6
-
       let applicableRate = tag.baseRate
 
-      // ✨ 시급 적용 우선순위: 주말야간 > 주말 > 야간 > 기본
       if (isWeekend && isNight) {
         applicableRate = tag.weekendNightRate
       } else if (isWeekend) {
@@ -176,11 +178,16 @@ export const useAttendanceStore = defineStore('attendance', () => {
         applicableRate = tag.nightRate
       }
 
+      // 분당 급여를 계산하여 총 급여에 더함
       totalWage += applicableRate / 60
       currentMinute.setMinutes(currentMinute.getMinutes() + 1)
     }
 
-    return { totalWage, totalHours }
+    // ✨ 휴식 시간을 반영한 최종 급여 계산
+    // (총 급여 / 총 근무 시간) * (실제 유급 시간)
+    const effectiveWage = totalHours > 0 ? (totalWage / totalHours) * (payableMinutes / 60) : 0
+
+    return { totalWage: effectiveWage, totalHours: totalHours }
   }
 
   const saveLog = (logData) => {
@@ -190,7 +197,12 @@ export const useAttendanceStore = defineStore('attendance', () => {
     const date = logData.date
     const fullStartTime = `${date}T${logData.start}`
     const fullEndTime = `${date}T${logData.end}`
-    const { totalWage, totalHours } = calculateWage(fullStartTime, fullEndTime, logData.tagId)
+    const { totalWage, totalHours } = calculateWage(
+      fullStartTime,
+      fullEndTime,
+      logData.tagId,
+      logData.restMinutes,
+    )
     const newLogData = { ...logData, workedHours: totalHours, dailyWage: totalWage }
     newLogData.modifiedAt = new Date()
     if (existingLogIndex > -1) {
