@@ -1,0 +1,24 @@
+{
+  "logs": [
+    {
+      "id": 1,
+      "date": "2025-07-11",
+      "start": "09:00",
+      "end": "12:00",
+      "workedHours": 3,
+      "tagId": 101,
+      "dailyWage": 3000,
+      "modifiedAt": "2025-07-11T12:00:00.000Z"
+    }
+  ],
+  "tags": [
+    {
+      "id": 101,
+      "name": "テスト",
+      "color": "#42b883",
+      "baseRate": 1000,
+      "nightRate": 1500,
+      "weekendRate": 1500
+    }
+  ]
+}

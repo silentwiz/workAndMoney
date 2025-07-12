@@ -1,0 +1,52 @@
+{
+  "logs": [
+    {
+      "id": 1752321812575,
+      "date": "2025-07-09",
+      "start": "09:00",
+      "end": "18:00",
+      "tagId": 1752321788783,
+      "workedHours": 9,
+      "dailyWage": 9000.000000000031,
+      "modifiedAt": "2025-07-12T12:03:32.575Z"
+    },
+    {
+      "id": 1752321805159,
+      "date": "2025-07-10",
+      "start": "09:00",
+      "end": "18:00",
+      "tagId": 1752321795205,
+      "workedHours": 9,
+      "dailyWage": 9000.000000000031,
+      "modifiedAt": "2025-07-12T12:03:25.159Z"
+    },
+    {
+      "id": 1752321802351,
+      "date": "2025-07-09",
+      "start": "09:00",
+      "end": "18:00",
+      "tagId": 1752321788783,
+      "workedHours": 9,
+      "dailyWage": 9000.000000000031,
+      "modifiedAt": "2025-07-12T12:03:22.351Z"
+    }
+  ],
+  "tags": [
+    {
+      "id": 1752321788783,
+      "name": "sane-",
+      "color": "#42b883",
+      "baseRate": 1000,
+      "nightRate": 1300,
+      "weekendRate": 1500
+    },
+    {
+      "id": 1752321795205,
+      "name": "flapp",
+      "color": "#b842b4",
+      "baseRate": 1000,
+      "nightRate": 1300,
+      "weekendRate": 1500
+    }
+  ]
+}

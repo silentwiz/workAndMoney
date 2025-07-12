@@ -9,6 +9,27 @@ export const useAttendanceStore = defineStore('attendance', () => {
   const viewedDate = ref(new Date())
 
   // --- Actions ---
+  const saveDataToServer = async () => {
+    if (!currentUser.value) return
+
+    // 서버로 보낼 현재 데이터
+    const dataToSave = {
+      logs: attendanceLogs.value,
+      tags: tags.value,
+    }
+
+    try {
+      await fetch(`/api/data?user=${currentUser.value}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSave),
+      })
+    } catch (error) {
+      console.error('Failed to save data to server:', error)
+    }
+  }
 
   const deleteLog = (logId) => {
     const index = attendanceLogs.value.findIndex((log) => log.id === logId)
@@ -59,24 +80,41 @@ export const useAttendanceStore = defineStore('attendance', () => {
     const jsonString = JSON.stringify(userData, null, 2)
     const blob = new Blob([jsonString], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${currentUser.value}_attendance_data.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    // 기존의 a 태그를 만들어 클릭하는 방식 대신, 새 탭에서 URL을 엽니다.
+    // 이 방식은 모든 브라우저와 모바일 기기에서 안정적으로 동작합니다.
+    window.open(url, '_blank')
+
+    // URL을 즉시 해제하면 새 탭이 로드되기 전에 연결이 끊길 수 있으므로,
+    // 약간의 시간차를 두고 해제합니다.
+    setTimeout(() => {
+      URL.revokeObjectURL(url)
+    }, 100)
   }
 
   const setViewedDate = (date) => {
     viewedDate.value = date
   }
 
-  const loadUser = (username) => {
+  const loadUser = async (username) => {
     currentUser.value = username
-    // rate, settings는 tags에 포함되어 있으므로 관련 로직 삭제
-    attendanceLogs.value = JSON.parse(localStorage.getItem(`${username}_logs`)) || []
-    tags.value = JSON.parse(localStorage.getItem(`${username}_tags`)) || []
+
+    try {
+      // 1. 우리 백엔드 API에 데이터를 요청합니다.
+      const response = await fetch(`/api/data?user=${username}`)
+      if (!response.ok) {
+        throw new Error('Server response was not ok')
+      }
+      const data = await response.json()
+
+      // 2. 서버에서 받은 데이터로 상태를 업데이트합니다.
+      attendanceLogs.value = data.logs || []
+      tags.value = data.tags || []
+    } catch (error) {
+      console.error('Failed to load user data:', error)
+      // 에러 발생 시 상태를 비워줌
+      attendanceLogs.value = []
+      tags.value = []
+    }
   }
 
   const logout = () => {
@@ -239,13 +277,11 @@ export const useAttendanceStore = defineStore('attendance', () => {
   watch(
     () => ({
       logs: attendanceLogs.value,
-      tags: tags.value, // rate, settings 삭제
+      tags: tags.value,
     }),
-    (state) => {
-      if (currentUser.value) {
-        localStorage.setItem(`${currentUser.value}_logs`, JSON.stringify(state.logs))
-        localStorage.setItem(`${currentUser.value}_tags`, JSON.stringify(state.tags)) // rate, settings 저장 로직 삭제
-      }
+    () => {
+      // 데이터가 변경될 때마다 서버에 저장 함수를 호출
+      saveDataToServer()
     },
     { deep: true },
   )
@@ -272,5 +308,6 @@ export const useAttendanceStore = defineStore('attendance', () => {
     exportUserData,
     importUserData,
     viewedMonthWageByTag,
+    saveDataToServer,
   }
 })

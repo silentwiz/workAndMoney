@@ -7,9 +7,9 @@ import UserProfile from '@/views/UserProfile.vue'
 const store = useAttendanceStore()
 const currentUser = ref(null)
 
-const handleUserSelected = (username) => {
+const handleUserSelected = async (username) => {
   currentUser.value = username
-  store.loadUser(username)
+  await store.loadUser(username)
 }
 
 const handleLogout = () => {

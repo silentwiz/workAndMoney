@@ -40,7 +40,7 @@ const handleImport = () => {
       <button @click="handleExport">データ保存</button>
     </div>
     <p class="description">現在のデータを保存します。</p>
-
+    <br />
     <div class="input-group import-group">
       <input type="file" ref="fileInput" accept=".json" />
       <button @click="handleImport">データ読み込み</button>
