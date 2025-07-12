@@ -11,6 +11,7 @@ const newTag = ref({
   baseRate: 1000,
   nightRate: 1500,
   weekendRate: 1500,
+  weekendNightRate: 1800,
 })
 
 const handleAddTag = () => {
@@ -69,6 +70,15 @@ const handleRateUpdate = (tag, field, value) => {
           />
           円</label
         >
+        <label
+          >週末夜間:
+          <input
+            type="number"
+            :value="tag.weekendNightRate"
+            @input="handleRateUpdate(tag, 'weekendNightRate', $event.target.value)"
+          />
+          円</label
+        >
       </div>
     </div>
 
@@ -80,6 +90,7 @@ const handleRateUpdate = (tag, field, value) => {
         <label>基本時給: <input type="number" v-model="newTag.baseRate" /> 円</label>
         <label>夜間時給: <input type="number" v-model="newTag.nightRate" /> 円</label>
         <label>週末時給: <input type="number" v-model="newTag.weekendRate" /> 円</label>
+        <label>週末夜間: <input type="number" v-model="newTag.weekendNightRate" /> 円</label>
       </div>
       <button @click="handleAddTag">追加</button>
     </div>

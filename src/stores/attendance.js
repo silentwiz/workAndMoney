@@ -131,6 +131,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
       baseRate: Number(tagData.baseRate) || 0,
       nightRate: Number(tagData.nightRate) || 0,
       weekendRate: Number(tagData.weekendRate) || 0,
+      weekendNightRate: Number(tagData.weekendNightRate) || 0,
     }
     tags.value.push(newTag)
   }
@@ -150,38 +151,38 @@ export const useAttendanceStore = defineStore('attendance', () => {
     const endDate = new Date(end)
     let totalMinutes = (endDate - startDate) / (1000 * 60)
     if (totalMinutes < 0) {
-      totalMinutes += 24 * 60 // 다음날 퇴근 처리
+      totalMinutes += 24 * 60
     }
 
     const totalHours = totalMinutes / 60
     let totalWage = 0
     let currentMinute = new Date(startDate)
 
-    // 1분 단위로 순회하며 급여 계산
     for (let i = 0; i < totalMinutes; i++) {
-      const dayOfWeek = currentMinute.getDay() // 현재 분의 요일 (0:일, 6:토)
-      const hour = currentMinute.getHours() // 현재 분의 시간 (0-23)
+      const dayOfWeek = currentMinute.getDay()
+      const hour = currentMinute.getHours()
 
-      let applicableRate = tag.baseRate // 기본 시급으로 시작
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      const isNight = hour >= 22 || hour < 6
 
-      // 1. 주말 할증 확인 (최우선 적용)
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
+      let applicableRate = tag.baseRate
+
+      // ✨ 시급 적용 우선순위: 주말야간 > 주말 > 야간 > 기본
+      if (isWeekend && isNight) {
+        applicableRate = tag.weekendNightRate
+      } else if (isWeekend) {
         applicableRate = tag.weekendRate
-      }
-      // 2. 야간 할증 확인 (주말이 아닐 경우 적용)
-      else if (hour >= 22 || hour < 6) {
+      } else if (isNight) {
         applicableRate = tag.nightRate
       }
 
-      // 분당 급여를 계산하여 총 급여에 더함
       totalWage += applicableRate / 60
-
-      // 다음 1분으로 시간 이동
       currentMinute.setMinutes(currentMinute.getMinutes() + 1)
     }
 
     return { totalWage, totalHours }
   }
+
   const saveLog = (logData) => {
     const existingLogIndex = logData.id
       ? attendanceLogs.value.findIndex((log) => log.id === logData.id)
