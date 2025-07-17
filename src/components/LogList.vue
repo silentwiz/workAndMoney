@@ -137,6 +137,7 @@ h2 {
   font-weight: bold;
   font-size: 1em;
 }
+
 .tag-badge {
   color: white;
   padding: 4px 10px;
@@ -155,6 +156,11 @@ h2 {
   content: '';
   display: none;
 }
+.col-expense {
+  flex: 1;
+  text-align: right;
+  font-size: 0.5em;
+} /* ✨ 추가 */
 
 /* ✨ --- 스마트폰 (모바일) 반응형 스타일 --- ✨ */
 /* 화면 너비가 768px 이하일 때 적용됩니다. */
@@ -188,14 +194,17 @@ h2 {
   }
   .col-tag,
   .col-wage {
+    font-weight: bold;
     justify-content: flex-end; /* 태그와 수입은 오른쪽 정렬 */
   }
   .col-wage strong {
-    font-size: 0.75em;
+    font-weight: bold;
+    font-size: 1em;
   }
 }
 .col-expense {
   flex: 1;
   text-align: right;
+  font-size: 0.7em;
 } /* ✨ 추가 */
 </style>

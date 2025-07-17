@@ -152,7 +152,7 @@ const onEditLog = (log) => {
     <div class="header-bar">
       <h2>勤務カレンダー</h2>
       <div class="calendar-controls">
-        <label>週の開始曜日:</label>
+        <label>週の開始曜日:</label><br />
         <button @click="weekStartDay = 1" :class="{ active: weekStartDay === 1 }">日</button>
         <button @click="weekStartDay = 2" :class="{ active: weekStartDay === 2 }">月</button>
         <span class="divider">|</span>
