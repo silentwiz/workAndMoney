@@ -16,12 +16,20 @@ const formatCurrency = (value) => {
 <template>
   <div class="dashboard">
     <div class="summary-card">
-      <h4>今週の予想収入</h4>
-      <p>{{ formatCurrency(store.weeklyWage) }}</p>
+      <h4>今週の予想純収入</h4>
+      <p>{{ formatCurrency(store.netWeeklyWage) }}</p>
+      <div class="details">
+        <span class="income">+ {{ formatCurrency(store.weeklyWage) }}</span>
+        <span class="expense">- {{ formatCurrency(store.weeklyExpenses) }}</span>
+      </div>
     </div>
     <div class="summary-card">
-      <h4>今月の予想収入</h4>
-      <p>{{ formatCurrency(store.monthlyWage) }}</p>
+      <h4>今月の予想純収入</h4>
+      <p>{{ formatCurrency(store.netMonthlyWage) }}</p>
+      <div class="details">
+        <span class="income">+ {{ formatCurrency(store.monthlyWage) }}</span>
+        <span class="expense">- {{ formatCurrency(store.monthlyExpenses) }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -33,7 +41,6 @@ const formatCurrency = (value) => {
   gap: 20px;
   margin-bottom: 20px;
 }
-
 .summary-card {
   background-color: #ffffff;
   padding: 20px;
@@ -41,17 +48,28 @@ const formatCurrency = (value) => {
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .summary-card h4 {
   margin: 0 0 10px 0;
   color: #555;
   font-size: 16px;
 }
-
 .summary-card p {
   margin: 0;
-  color: #42b883;
+  color: #2c3e50; /* 순수입은 진한 색으로 */
   font-size: 24px;
   font-weight: bold;
+}
+/* ✨ 추가된 스타일 */
+.details {
+  margin-top: 10px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-around;
+}
+.income {
+  color: #42b883; /* 초록색 */
+}
+.expense {
+  color: #e53935; /* 빨간색 */
 }
 </style>

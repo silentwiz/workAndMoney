@@ -34,20 +34,6 @@ const handleImport = () => {
 </script>
 
 <template>
-  <div class="section">
-    <h3>💾データ管理</h3>
-    <div class="input-group">
-      <button @click="handleExport">データ保存</button>
-    </div>
-    <p class="description">現在のデータを保存します。</p>
-    <br />
-    <div class="input-group import-group">
-      <input type="file" ref="fileInput" accept=".json" />
-      <button @click="handleImport">データ読み込み</button>
-    </div>
-    <p class="description">データを読み込みます。 ⚠️注意：データが上書きされます。</p>
-  </div>
-
   <div class="log-list-container">
     <h2>記録</h2>
 
@@ -82,6 +68,19 @@ const handleImport = () => {
     </div>
 
     <p v-if="store.attendanceLogs.length === 0" class="no-logs">まだ記録がありません。</p>
+  </div>
+  <div class="section">
+    <h3>💾データ管理</h3>
+    <div class="input-group">
+      <button @click="handleExport">データ保存</button>
+    </div>
+    <p class="description">現在のデータを保存します。</p>
+    <br />
+    <div class="input-group import-group">
+      <input type="file" ref="fileInput" accept=".json" />
+      <button @click="handleImport">データ読み込み</button>
+    </div>
+    <p class="description">データを読み込みます。 ⚠️注意：データが上書きされます。</p>
   </div>
 </template>
 

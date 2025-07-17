@@ -133,7 +133,6 @@ export const useAttendanceStore = defineStore('attendance', () => {
       nightRate: Number(tagData.nightRate) || 0,
       weekendRate: Number(tagData.weekendRate) || 0,
       weekendNightRate: Number(tagData.weekendNightRate) || 0,
-      // ✨ 새로운 설정 정보 추가
       payday: Number(tagData.payday) || 25, // 월급 지급일 (기본값 25일)
       periodStartDay: Number(tagData.periodStartDay) || 1, // 급여 정산 시작일 (기본값 1일)
       nightStartHour: Number(tagData.nightStartHour) || 22, // 야간 근무 시작 시간 (기본값 22시)
@@ -219,6 +218,37 @@ export const useAttendanceStore = defineStore('attendance', () => {
 
   // --- Getters / Computed ---
 
+  // 이번 주 총 지출
+  const weeklyExpenses = computed(() => {
+    // weeklyWage 계산 로직과 동일하지만, dailyWage 대신 expenses를 합산
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const dayOfWeek = today.getDay()
+    const startOfWeek = new Date(today.setDate(today.getDate() - dayOfWeek))
+    const datesOfWeek = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek)
+      date.setDate(date.getDate() + i)
+      datesOfWeek.push(date.toISOString().slice(0, 10))
+    }
+    return attendanceLogs.value
+      .filter((log) => datesOfWeek.includes(log.date))
+      .reduce((total, log) => total + (log.expenses || 0), 0)
+  })
+
+  // 이번 달 총 지출
+  const monthlyExpenses = computed(() => {
+    const now = new Date()
+    const targetMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    return attendanceLogs.value
+      .filter((log) => log.date.startsWith(targetMonthStr))
+      .reduce((total, log) => total + (log.expenses || 0), 0)
+  })
+
+  // 이번 주 순수입
+  const netWeeklyWage = computed(() => weeklyWage.value - weeklyExpenses.value)
+  // 이번 달 순수입
+  const netMonthlyWage = computed(() => monthlyWage.value - monthlyExpenses.value)
   const viewedMonthWageByTag = computed(() => {
     if (!viewedDate.value) return []
 
@@ -326,5 +356,9 @@ export const useAttendanceStore = defineStore('attendance', () => {
     importUserData,
     viewedMonthWageByTag,
     saveDataToServer,
+    weeklyExpenses,
+    monthlyExpenses,
+    netWeeklyWage,
+    netMonthlyWage,
   }
 })

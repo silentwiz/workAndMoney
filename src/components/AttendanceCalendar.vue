@@ -16,7 +16,7 @@ const dailyLogs = ref([]) // 일일 요약에 보여줄 로그들
 const editingLog = ref(null) // 편집할 특정 로그
 // --- ✨ 1. 새로운 UI 제어용 상태 변수 추가 ---
 const indicatorStyle = ref('dot') // 'dot' 또는 'bar'
-const weekStartDay = ref(1) // 1: 일요일, 2: 월요일
+const weekStartDay = ref(2) // 1: 일요일, 2: 월요일
 
 const calendarLocale = computed(() => ({
   id: 'ja', // 일본어 로케일 사용
@@ -27,34 +27,68 @@ const calendarLocale = computed(() => ({
 }))
 
 const attributes = computed(() => {
-  // 각 근무 기록을 순회하며 개별 속성을 만듭니다.
   const logAttributes = store.attendanceLogs.map((log) => {
     const tag = store.getTagById(log.tagId)
     const [year, month, day] = log.date.split('-').map(Number)
 
-    return {
-      key: log.id,
-      // ✨ 'content' 속성을 사용하여 스타일을 직접 지정합니다.
-      // 이 방식은 점과 막대 모두에 적용되며, 라이브러리가 가장 잘 인식하는 방법입니다.
-      bar: {
-        style: {
-          backgroundColor: tag.color,
+    // ✨ indicatorStyle 값에 따라 다른 속성 객체를 생성
+    if (indicatorStyle.value === 'dot') {
+      return {
+        key: `log-${log.id}`,
+        dot: {
+          style: {
+            backgroundColor: tag ? tag.color : 'gray',
+          },
         },
-      },
-      dates: new Date(year, month - 1, day),
+        dates: new Date(year, month - 1, day),
+        order: 10,
+      }
+    }
+    // bar 스타일일 경우
+    else {
+      return {
+        key: `log-${log.id}`,
+        bar: {
+          style: {
+            backgroundColor: tag ? tag.color : 'gray',
+          },
+        },
+        dates: new Date(year, month - 1, day),
+        order: 10,
+      }
     }
   })
+
+  const paydayAttributes = []
+  if (store.viewedDate && store.tags.length > 0) {
+    const year = store.viewedDate.getFullYear()
+    const month = store.viewedDate.getMonth()
+    store.tags.forEach((tag) => {
+      if (tag.payday && Number.isInteger(tag.payday)) {
+        const thisMonthPayday = new Date(year, month, tag.payday)
+        if (thisMonthPayday.getMonth() === month) {
+          paydayAttributes.push({
+            key: `payday-${tag.id}-${month}`,
+            highlight: { color: tag.color, fillMode: 'light' },
+            dates: thisMonthPayday,
+            order: 0,
+          })
+        }
+      }
+    })
+  }
 
   return [
     {
       key: 'today',
-      highlight: true,
+      highlight: { fillMode: 'outline', color: '#42b883' },
       dates: new Date(),
+      order: 5,
     },
     ...logAttributes,
+    ...paydayAttributes,
   ]
 })
-
 const calendarViewDate = computed(() => store.viewedDate)
 
 const onDeleteLog = (logId) => {
