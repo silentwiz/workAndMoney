@@ -15,7 +15,7 @@ const startTime = ref('')
 const endTime = ref('')
 const selectedTagId = ref(null)
 const logId = ref(null)
-const restMinutes = ref(60)
+const restMinutes = ref(0)
 const expenses = ref(0) // ✨ 지출 상태 변수
 
 watchEffect(() => {
@@ -32,7 +32,7 @@ watchEffect(() => {
     startTime.value = '09:00'
     endTime.value = '18:00'
     selectedTagId.value = null
-    restMinutes.value = 60
+    restMinutes.value = 0
     expenses.value = 0
     logId.value = null
   }
@@ -80,7 +80,7 @@ const handleSubmit = () => {
       <input type="time" v-model="endTime" />
       <div class="rest-input">
         <label for="rest-time">休憩</label>
-        <input id="rest-time" type="number" v-model="restMinutes" min="0" step="15" />
+        <input id="rest-time" type="number" v-model="restMinutes" min="0" step="60" />
         <span>分</span>
       </div>
       <div class="expense-input">
