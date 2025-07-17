@@ -4,55 +4,52 @@ import { useAttendanceStore } from '@/stores/attendance'
 
 const store = useAttendanceStore()
 
-// UI 제어용 변수
-const selectedYear = ref(new Date().getFullYear())
-const selectedMonth = ref(new Date().getMonth() + 1)
 const summaryData = ref([])
 const showSummary = ref(false)
 
-// 연도 선택 옵션 (현재 연도 +/- 5년)
-const yearOptions = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const years = []
-  for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-    years.push(i)
-  }
-  return years
-})
-
 // 요약 계산 함수
 const calculateSummary = () => {
-  const logs = store.attendanceLogs
+  const today = new Date() // 계산의 기준이 되는 오늘 날짜
 
-  // 1. 연간 수입 계산
-  const yearLogs = logs.filter((log) => log.date.startsWith(String(selectedYear.value)))
-  const yearlyWageByTag = {}
-  for (const log of yearLogs) {
-    if (!yearlyWageByTag[log.tagId]) yearlyWageByTag[log.tagId] = 0
-    yearlyWageByTag[log.tagId] += log.dailyWage
-  }
+  summaryData.value = store.tags.map((tag) => {
+    // --- ✨ 새로운 급여 기간 계산 로직 ---
+    const closingDay = tag.periodStartDay // 마감일 (예: 3일)
 
-  // 2. 월간 수입 계산
-  const targetMonthStr = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`
-  const monthLogs = yearLogs.filter((log) => log.date.startsWith(targetMonthStr))
-  const monthlyWageByTag = {}
-  for (const log of monthLogs) {
-    if (!monthlyWageByTag[log.tagId]) monthlyWageByTag[log.tagId] = 0
-    monthlyWageByTag[log.tagId] += log.dailyWage
-  }
+    // 1. 이번 급여 기간이 언제 끝나는지 계산
+    let periodEndDate = new Date(today.getFullYear(), today.getMonth(), closingDay)
+    // 만약 오늘 날짜가 이번 달 마감일을 이미 지났다면, 급여 기간은 다음 달에 끝남
+    if (today.getDate() > closingDay) {
+      periodEndDate.setMonth(periodEndDate.getMonth() + 1)
+    }
 
-  // 3. 최종 데이터 조합
-  summaryData.value = store.tags
-    .map((tag) => ({
-      tagId: tag.id,
+    // 2. 이번 급여 기간이 언제 시작하는지 계산 (종료일 기준 한 달 전 + 1일)
+    let periodStartDate = new Date(periodEndDate)
+    periodStartDate.setMonth(periodStartDate.getMonth() - 1)
+    periodStartDate.setDate(periodStartDate.getDate() + 1)
+    // --- ✨ 계산 로직 끝 ---
+
+    // YYYY-MM-DD 형식으로 변환
+    const startDateStr = periodStartDate.toISOString().slice(0, 10)
+    const endDateStr = periodEndDate.toISOString().slice(0, 10)
+
+    // 해당 기간과 태그에 맞는 로그만 필터링
+    const periodLogs = store.attendanceLogs.filter((log) => {
+      return log.tagId === tag.id && log.date >= startDateStr && log.date <= endDateStr
+    })
+
+    // 필터링된 로그의 수입 합산
+    const totalWage = periodLogs.reduce((sum, log) => sum + log.dailyWage, 0)
+
+    return {
       tagName: tag.name,
       tagColor: tag.color,
-      yearlyTotal: yearlyWageByTag[tag.id] || 0,
-      monthlyTotal: monthlyWageByTag[tag.id] || 0,
-    }))
-    .sort((a, b) => b.monthlyTotal - a.monthlyTotal)
+      payday: tag.payday,
+      period: `${startDateStr.slice(5)} ~ ${endDateStr.slice(5)}`,
+      totalWage: totalWage,
+    }
+  })
 
-  showSummary.value = true // 계산 후 요약 표시
+  showSummary.value = true
 }
 
 // 통화 포맷 함수
@@ -68,28 +65,24 @@ const formatCurrency = (value) => {
 <template>
   <div class="summary-container">
     <div class="controls">
-      <select v-model="selectedYear">
-        <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}年</option>
-      </select>
-      <select v-model="selectedMonth">
-        <option v-for="month in 12" :key="month" :value="month">{{ month }}月</option>
-      </select>
-      <button @click="calculateSummary">収入要約</button>
+      <button @click="calculateSummary">現在の給料期間の収入要約</button>
     </div>
 
     <div v-if="showSummary" class="results-table">
       <div class="result-row header">
         <span class="col-tag">職場</span>
-        <span class="col-month">{{ selectedMonth }}月の収入</span>
-        <span class="col-year">{{ selectedYear }}年の収入</span>
+        <span class="col-period">対象期間</span>
+        <span class="col-payday">給料日</span>
+        <span class="col-wage">予想収入</span>
       </div>
-      <div v-for="item in summaryData" :key="item.tagId" class="result-row">
+      <div v-for="item in summaryData" :key="item.tagName" class="result-row">
         <span class="col-tag">
           <span class="tag-indicator" :style="{ backgroundColor: item.tagColor }"></span>
           {{ item.tagName }}
         </span>
-        <span class="col-month">{{ formatCurrency(item.monthlyTotal) }}</span>
-        <span class="col-year">{{ formatCurrency(item.yearlyTotal) }}</span>
+        <span class="col-period">{{ item.period }}</span>
+        <span class="col-payday">毎月 {{ item.payday }}日</span>
+        <span class="col-wage">{{ formatCurrency(item.totalWage) }}</span>
       </div>
     </div>
   </div>
@@ -104,9 +97,8 @@ const formatCurrency = (value) => {
 }
 .controls {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 20px;
+  justify-content: flex-end;
+  margin-bottom: 15px;
 }
 select,
 button {
@@ -126,7 +118,7 @@ button {
 .result-row {
   display: flex;
   align-items: center;
-  padding: 10px 5px;
+  padding: 12px 5px;
   border-bottom: 1px solid #eee;
 }
 .result-row.header {
@@ -134,16 +126,26 @@ button {
   background-color: #f0f0f0;
 }
 .col-tag {
-  flex: 2;
+  flex: 1.5;
   display: flex;
   align-items: center;
 }
-.col-month {
+.col-period {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+}
+.col-payday {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+}
+.col-wage {
   flex: 1.5;
   text-align: right;
+  font-weight: bold;
 }
-.col-year {
-  flex: 1.5;
+.result-row.header .col-wage {
   text-align: right;
 }
 .tag-indicator {

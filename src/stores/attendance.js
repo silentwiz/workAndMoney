@@ -126,12 +126,18 @@ export const useAttendanceStore = defineStore('attendance', () => {
   const addTag = (tagData) => {
     const newTag = {
       id: Date.now(),
-      name: tagData.name,
-      color: tagData.color,
+      name: tagData.name || '새 직장',
+      color: tagData.color || '#42b883',
+      // 시급 정보
       baseRate: Number(tagData.baseRate) || 0,
       nightRate: Number(tagData.nightRate) || 0,
       weekendRate: Number(tagData.weekendRate) || 0,
       weekendNightRate: Number(tagData.weekendNightRate) || 0,
+      // ✨ 새로운 설정 정보 추가
+      payday: Number(tagData.payday) || 25, // 월급 지급일 (기본값 25일)
+      periodStartDay: Number(tagData.periodStartDay) || 1, // 급여 정산 시작일 (기본값 1일)
+      nightStartHour: Number(tagData.nightStartHour) || 22, // 야간 근무 시작 시간 (기본값 22시)
+      nightEndHour: Number(tagData.nightEndHour) || 6, // 야간 근무 종료 시간 (기본값 6시)
     }
     tags.value.push(newTag)
   }
@@ -155,19 +161,19 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
 
     const totalHours = totalMinutes / 60
-
-    // ✨ 휴식 시간이 총 근무시간보다 길 경우 0으로 처리
     const payableMinutes = Math.max(0, totalMinutes - restMinutes)
 
-    let totalWage = 0
+    let grossWage = 0
     let currentMinute = new Date(startDate)
 
-    // 총 근무 시간(totalMinutes)만큼 루프를 돌며 각 분의 시급을 먼저 계산
     for (let i = 0; i < totalMinutes; i++) {
       const dayOfWeek = currentMinute.getDay()
       const hour = currentMinute.getHours()
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-      const isNight = hour >= 22 || hour < 6
+
+      // ✨ 태그의 설정값을 기준으로 야간 시간 판단
+      const isNight = hour >= tag.nightStartHour || hour < tag.nightEndHour
+
       let applicableRate = tag.baseRate
 
       if (isWeekend && isNight) {
@@ -178,14 +184,11 @@ export const useAttendanceStore = defineStore('attendance', () => {
         applicableRate = tag.nightRate
       }
 
-      // 분당 급여를 계산하여 총 급여에 더함
-      totalWage += applicableRate / 60
+      grossWage += applicableRate / 60
       currentMinute.setMinutes(currentMinute.getMinutes() + 1)
     }
 
-    // ✨ 휴식 시간을 반영한 최종 급여 계산
-    // (총 급여 / 총 근무 시간) * (실제 유급 시간)
-    const effectiveWage = totalHours > 0 ? (totalWage / totalHours) * (payableMinutes / 60) : 0
+    const effectiveWage = totalHours > 0 ? (grossWage / totalHours) * (payableMinutes / 60) : 0
 
     return { totalWage: effectiveWage, totalHours: totalHours }
   }
