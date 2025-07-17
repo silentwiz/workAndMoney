@@ -170,12 +170,30 @@ input[type='number']::-webkit-outer-spin-button {
   }
   .log-editor-form > * {
     /* 모든 자식 요소에 적용 */
-    width: 100%;
+    width: 50%;
   }
   .rest-input input,
   .rest-input select {
     width: auto;
     flex-grow: 1; /* 남은 공간 모두 차지 */
+  }
+  .expense-input {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #ccc;
+    padding: 0 8px;
+    border-radius: 4px;
+  }
+  .expense-input input {
+    border: none;
+    width: 100%;
+    text-align: right;
+    padding: 8px 0;
+  }
+  .expense-input label {
+    font-size: 14px;
+    color: #555;
   }
 }
 </style>
