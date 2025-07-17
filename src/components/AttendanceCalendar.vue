@@ -14,6 +14,46 @@ const selectedDate = ref(null)
 const modalMode = ref('viewer') // 'viewer' 또는 'editor'
 const dailyLogs = ref([]) // 일일 요약에 보여줄 로그들
 const editingLog = ref(null) // 편집할 특정 로그
+// --- ✨ 1. 새로운 UI 제어용 상태 변수 추가 ---
+const indicatorStyle = ref('dot') // 'dot' 또는 'bar'
+const weekStartDay = ref(1) // 1: 일요일, 2: 월요일
+
+const calendarLocale = computed(() => ({
+  id: 'ja', // 일본어 로케일 사용
+  firstDayOfWeek: weekStartDay.value,
+  masks: {
+    weekdays: 'W', // 요일을 한 글자로 (日, 月...)
+  },
+}))
+
+const attributes = computed(() => {
+  // 각 근무 기록을 순회하며 개별 속성을 만듭니다.
+  const logAttributes = store.attendanceLogs.map((log) => {
+    const tag = store.getTagById(log.tagId)
+    const [year, month, day] = log.date.split('-').map(Number)
+
+    return {
+      key: log.id,
+      // ✨ 'content' 속성을 사용하여 스타일을 직접 지정합니다.
+      // 이 방식은 점과 막대 모두에 적용되며, 라이브러리가 가장 잘 인식하는 방법입니다.
+      bar: {
+        style: {
+          backgroundColor: tag.color,
+        },
+      },
+      dates: new Date(year, month - 1, day),
+    }
+  })
+
+  return [
+    {
+      key: 'today',
+      highlight: true,
+      dates: new Date(),
+    },
+    ...logAttributes,
+  ]
+})
 
 const calendarViewDate = computed(() => store.viewedDate)
 
@@ -72,45 +112,29 @@ const onEditLog = (log) => {
   editingLog.value = log // 수정할 로그 데이터 전달
   modalMode.value = 'editor'
 }
-
-// 달력의 dot 표시를 위한 attributes는 그대로 유지해야 합니다.
-const attributes = computed(() => {
-  // 각 근무 기록을 순회하며 개별 점(dot) 속성을 만듭니다.
-  const logAttributes = store.attendanceLogs.map((log) => {
-    const tag = store.getTagById(log.tagId)
-    const [year, month, day] = log.date.split('-').map(Number)
-
-    return {
-      key: log.id,
-      dot: tag ? tag.color : 'gray', // 점의 색상을 지정
-      dates: new Date(year, month - 1, day),
-    }
-  })
-
-  // '오늘' 표시와 합쳐서 최종 반환
-  return [
-    {
-      key: 'today',
-      highlight: true,
-      dates: new Date(),
-    },
-    ...logAttributes,
-  ]
-})
 </script>
-
 <template>
   <div class="calendar-container">
     <div class="header-bar">
-      <h2></h2>
-      <div v-if="calendarViewDate" class="viewed-month-wage">
-        {{ calendarViewDate.getFullYear() }}년 {{ calendarViewDate.getMonth() + 1 }}월 총 수입:
-        <strong>{{ formatCurrency(store.viewedMonthWage) }}</strong>
+      <h2>勤務カレンダー</h2>
+      <div class="calendar-controls">
+        <label>週の開始曜日:</label>
+        <button @click="weekStartDay = 1" :class="{ active: weekStartDay === 1 }">日</button>
+        <button @click="weekStartDay = 2" :class="{ active: weekStartDay === 2 }">月</button>
+        <span class="divider">|</span>
+        <label>表示スタイル:</label>
+        <button @click="indicatorStyle = 'dot'" :class="{ active: indicatorStyle === 'dot' }">
+          点
+        </button>
+        <button @click="indicatorStyle = 'bar'" :class="{ active: indicatorStyle === 'bar' }">
+          棒
+        </button>
       </div>
     </div>
 
     <VCalendar
       :attributes="attributes"
+      :locale="calendarLocale"
       @dayclick="handleDayClick"
       @update:pages="handlePageUpdate"
       expanded
@@ -144,6 +168,31 @@ const attributes = computed(() => {
   align-items: center;
   margin-bottom: 10px;
 }
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.calendar-controls label {
+  font-size: 14px;
+  color: #555;
+}
+.calendar-controls button {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.calendar-controls button.active {
+  background-color: #42b883;
+  color: white;
+  border-color: #42b883;
+}
+.divider {
+  color: #ccc;
+}
+
 .viewed-month-wage {
   font-size: 16px;
   background-color: #f0f2f5;
