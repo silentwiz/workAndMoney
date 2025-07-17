@@ -72,4 +72,15 @@ const formatCurrency = (value) => {
 .expense {
   color: #e53935; /* 빨간색 */
 }
+
+/* --- 모바일 반응형 스타일 --- */
+@media (max-width: 768px) {
+  .dashboard {
+    /* 2열 그리드 -> 1열 그리드로 변경 */
+    grid-template-columns: 1fr;
+  }
+  .summary-card p {
+    font-size: 20px; /* 모바일에서 글자 크기 살짝 줄임 */
+  }
+}
 </style>

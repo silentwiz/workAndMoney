@@ -162,5 +162,17 @@ h5 {
   border: none;
   border-radius: 4px;
   font-size: 16px;
+} /* --- 모바일 반응형 스타일 --- */
+@media (max-width: 768px) {
+  .rate-inputs {
+    flex-direction: column; /* 세로로 쌓기 */
+    align-items: stretch; /* 가로로 꽉 채우기 */
+  }
+  .rate-inputs label {
+    justify-content: space-between; /* 라벨과 입력 필드 양쪽 정렬 */
+  }
+  .rate-inputs input {
+    width: 120px; /* 입력 필드 너비 조정 */
+  }
 }
 </style>

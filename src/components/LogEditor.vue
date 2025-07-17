@@ -170,7 +170,7 @@ input[type='number']::-webkit-outer-spin-button {
   }
   .log-editor-form > * {
     /* 모든 자식 요소에 적용 */
-    width: 50%;
+    width: 100%;
   }
   .rest-input input,
   .rest-input select {

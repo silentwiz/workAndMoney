@@ -77,13 +77,13 @@ const formatCurrency = (value) => {
         <span class="col-wage">予想収入</span>
       </div>
       <div v-for="item in summaryData" :key="item.tagName" class="result-row">
-        <span class="col-tag">
+        <span class="col-tag" data-label="職場">
           <span class="tag-indicator" :style="{ backgroundColor: item.tagColor }"></span>
           {{ item.tagName }}
         </span>
-        <span class="col-period">{{ item.period }}</span>
-        <span class="col-payday">毎月 {{ item.payday }}日</span>
-        <span class="col-wage">{{ formatCurrency(item.totalWage) }}</span>
+        <span class="col-period" data-label="対象期間">{{ item.period }}</span>
+        <span class="col-payday" data-label="給料日">毎月 {{ item.payday }}日</span>
+        <span class="col-wage" data-label="予想収入">{{ formatCurrency(item.totalWage) }}</span>
       </div>
     </div>
   </div>
@@ -155,5 +155,45 @@ button {
   height: 12px;
   border-radius: 50%;
   margin-right: 8px;
+}
+/* --- 모바일 반응형 스타일 --- */
+@media (max-width: 768px) {
+  .result-row.header {
+    display: none; /* 모바일에선 제목 행 숨김 */
+  }
+  .result-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    border: 1px solid #eee;
+    margin-bottom: 10px;
+    border-radius: 6px;
+  }
+  .result-row > span {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    text-align: right;
+  }
+  /* 각 데이터 앞에 제목을 붙여줌 */
+  .result-row > span::before {
+    content: attr(data-label); /* data-label 속성값을 가져옴 */
+    font-weight: bold;
+    text-align: left;
+    margin-right: 10px;
+  }
+  .col-tag::before {
+    content: '職場';
+  }
+  .col-period::before {
+    content: '対象期間';
+  }
+  .col-payday::before {
+    content: '給料日';
+  }
+  .col-wage::before {
+    content: '予想収入';
+  }
 }
 </style>
