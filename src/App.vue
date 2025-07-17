@@ -30,6 +30,9 @@ const handleLogout = () => {
       <button @click="handleLogout">ログアウト</button>
     </header>
     <RouterView />
+    <a href="https://www.flaticon.com/kr/free-icons/-" title="재정적 인 아이콘"
+      >재정적 인 아이콘 제작자: juicy_fish - Flaticon</a
+    >
   </div>
 </template>
 
