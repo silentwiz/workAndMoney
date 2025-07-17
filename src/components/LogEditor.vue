@@ -80,7 +80,13 @@ const handleSubmit = () => {
       <input type="time" v-model="endTime" />
       <div class="rest-input">
         <label for="rest-time">休憩</label>
-        <input id="rest-time" type="number" v-model="restMinutes" min="0" step="60" />
+        <select id="rest-time" v-model="restMinutes">
+          <option value="0">0</option>
+          <option value="30">30</option>
+          <option value="60">60</option>
+          <option value="90">90</option>
+          <option value="120">120</option>
+        </select>
         <span>分</span>
       </div>
       <div class="expense-input">
@@ -155,5 +161,21 @@ input[type='number']::-webkit-outer-spin-button {
 .expense-input label {
   font-size: 14px;
   color: #555;
+}
+
+@media (max-width: 768px) {
+  .log-editor-form {
+    flex-direction: column; /* 세로로 쌓기 */
+    align-items: stretch; /* 가로로 꽉 채우기 */
+  }
+  .log-editor-form > * {
+    /* 모든 자식 요소에 적용 */
+    width: 100%;
+  }
+  .rest-input input,
+  .rest-input select {
+    width: auto;
+    flex-grow: 1; /* 남은 공간 모두 차지 */
+  }
 }
 </style>
