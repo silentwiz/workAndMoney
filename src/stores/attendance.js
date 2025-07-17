@@ -205,6 +205,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
       fullEndTime,
       logData.tagId,
       logData.restMinutes,
+      logData.expenses,
     )
     const newLogData = { ...logData, workedHours: totalHours, dailyWage: totalWage }
     newLogData.modifiedAt = new Date()

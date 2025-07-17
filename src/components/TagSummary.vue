@@ -39,13 +39,14 @@ const calculateSummary = () => {
 
     // 필터링된 로그의 수입 합산
     const totalWage = periodLogs.reduce((sum, log) => sum + log.dailyWage, 0)
+    const totalExpenses = periodLogs.reduce((sum, log) => sum + (log.expenses || 0), 0)
 
     return {
       tagName: tag.name,
       tagColor: tag.color,
       payday: tag.payday,
       period: `${startDateStr.slice(5)} ~ ${endDateStr.slice(5)}`,
-      totalWage: totalWage,
+      totalWage: totalWage - totalExpenses, // ✨ 총급여 - 총지출
     }
   })
 

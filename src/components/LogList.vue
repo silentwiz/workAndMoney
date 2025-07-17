@@ -57,7 +57,8 @@ const handleImport = () => {
         <span class="col-date">勤務日</span>
         <span class="col-tag">職場</span>
         <span class="col-time">勤務時間</span>
-        <span class="col-wage">予想収入</span>
+        <span class="col-expense">支出</span>
+        <span class="col-wage">純収入</span>
       </div>
 
       <div v-for="log in store.attendanceLogs" :key="log.id" class="log-row">
@@ -73,8 +74,9 @@ const handleImport = () => {
         <span class="col-time"
           >{{ log.start }} ~ {{ log.end }} ({{ log.workedHours.toFixed(2) }}時間)</span
         >
+        <span class="col-expense">{{ formatCurrency(log.expenses || 0) }}</span>
         <span class="col-wage">
-          <strong>{{ formatCurrency(log.dailyWage) }}</strong>
+          <strong>{{ formatCurrency(log.dailyWage - (log.expenses || 0)) }}</strong>
         </span>
       </div>
     </div>
@@ -193,4 +195,8 @@ h2 {
     font-size: 0.75em;
   }
 }
+.col-expense {
+  flex: 1;
+  text-align: right;
+} /* ✨ 추가 */
 </style>
