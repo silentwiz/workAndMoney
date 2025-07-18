@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watchEffect } from 'vue'
-import { useAttendanceStore } from '@/stores/attendance'
+import { useLogStore } from '@/stores/logStore'
+import { useTagStore } from '@/stores/tagStore'
 
 const props = defineProps({
   date: { type: Date, required: true },
@@ -8,7 +9,8 @@ const props = defineProps({
   logData: { type: Object, default: null },
 })
 const emit = defineEmits(['close'])
-const store = useAttendanceStore()
+const logStore = useLogStore()
+const tagStore = useTagStore()
 
 // 입력 필드 상태
 const startTime = ref('')
@@ -58,7 +60,7 @@ const handleSubmit = () => {
   }
 
   validationError.value = '' // ✨ 성공 시 에러 메시지 초기화
-  store.saveLog({
+  logStore.saveLog({
     id: logId.value,
     date: formattedDate, // 선택된 날짜
     start: startTime.value,
@@ -77,7 +79,7 @@ const handleSubmit = () => {
     <div class="log-editor-form">
       <select v-model="selectedTagId">
         <option :value="null" disabled>職場選択</option>
-        <option v-for="tag in store.tags" :key="tag.id" :value="tag.id">
+        <option v-for="tag in tagStore.tags" :key="tag.id" :value="tag.id">
           {{ tag.name }}
         </option>
       </select>

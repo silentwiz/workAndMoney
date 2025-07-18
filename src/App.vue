@@ -1,19 +1,19 @@
 <script setup>
 import { ref } from 'vue'
 import { RouterView } from 'vue-router'
-import { useAttendanceStore } from '@/stores/attendance'
+import { useUserStore } from '@/stores/userStore'
 import UserProfile from '@/views/UserProfile.vue'
 
-const store = useAttendanceStore()
+const userStore = useUserStore()
 const currentUser = ref(null)
 
 const handleUserSelected = async (username) => {
   currentUser.value = username
-  await store.loadUser(username)
+  await userStore.loadUser(username)
 }
 
 const handleLogout = () => {
-  store.logout()
+  userStore.logout()
   currentUser.value = null
 }
 </script>
@@ -30,9 +30,6 @@ const handleLogout = () => {
       <button @click="handleLogout">ログアウト</button>
     </header>
     <RouterView />
-    <a href="https://www.flaticon.com/kr/free-icons/-" title="재정적 인 아이콘"
-      >재정적 인 아이콘 제작자: juicy_fish - Flaticon</a
-    >
   </div>
 </template>
 

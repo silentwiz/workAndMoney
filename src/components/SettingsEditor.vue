@@ -1,28 +1,36 @@
 <script setup>
 import { ref } from 'vue'
-import { useAttendanceStore } from '@/stores/attendance'
+import { useTagStore } from '@/stores/tagStore'
 import BaseModal from './BaseModal.vue' // 모달 컴포넌트 import
 
-const store = useAttendanceStore()
+const tagStore = useTagStore()
 
 // --- 상태 변수 ---
 const isModalOpen = ref(false) // 모달 열림/닫힘 상태
 const editingTag = ref(null) // 현재 수정 중인 태그 데이터
+const saveMessage = ref('') // ✨ 저장 메시지 상태 추가
 
 // '상세 설정' 버튼을 눌렀을 때 실행될 함수
 const openEditModal = (tag) => {
-  // 수정할 태그 데이터의 복사본을 만듭니다. (원본을 직접 수정하지 않기 위함)
-  editingTag.value = { ...tag }
+  // 수정할 태그 데이터를 직접 참조하도록 변경
+  editingTag.value = tag
   isModalOpen.value = true
 }
 
 // 모달 안에서 '저장' 버튼을 눌렀을 때 실행될 함수
 const handleUpdateTag = () => {
   if (editingTag.value) {
-    store.updateTag(editingTag.value)
+    tagStore.updateTag(editingTag.value)
+    saveMessage.value = '保存されました！' // ✨ 저장 성공 메시지 설정
+    setTimeout(() => {
+      saveMessage.value = '' // 2초 후 메시지 지우기
+      isModalOpen.value = false // 메시지 사라진 후 모달 닫기
+    }, 2000)
+  } else {
+    isModalOpen.value = false // 태그가 없으면 바로 모달 닫기
   }
-  isModalOpen.value = false // 모달 닫기
 }
+
 
 // 새 태그 추가 로직 (기본값 설정)
 const newTag = ref({
@@ -40,7 +48,7 @@ const newTag = ref({
 
 const handleAddTag = () => {
   if (newTag.value.name) {
-    store.addTag({ ...newTag.value })
+    tagStore.addTag({ ...newTag.value })
     // 입력 필드 초기화
     newTag.value.name = ''
   }
@@ -51,7 +59,7 @@ const handleAddTag = () => {
   <div class="container">
     <h3># 職場(タグ)別設定</h3>
 
-    <div v-for="tag in store.tags" :key="tag.id" class="tag-item">
+    <div v-for="tag in tagStore.tags" :key="tag.id" class="tag-item">
       <span class="tag-badge" :style="{ backgroundColor: tag.color }">{{ tag.name }}</span>
       <button @click="openEditModal(tag)">詳細設定</button>
     </div>
@@ -88,6 +96,7 @@ const handleAddTag = () => {
         </div>
 
         <button @click="handleUpdateTag" class="save-button">保存</button>
+        <p v-if="saveMessage" class="save-message">{{ saveMessage }}</p> <!-- ✨ 메시지 표시 요소 추가 -->
       </div>
     </BaseModal>
   </div>
@@ -163,6 +172,12 @@ h5 {
   border-radius: 4px;
   font-size: 16px;
 } /* --- 모바일 반응형 스타일 --- */
+.save-message {
+  text-align: center;
+  color: #42b883; /* 초록색 */
+  margin-top: 10px;
+  font-weight: bold;
+}
 @media (max-width: 768px) {
   .rate-inputs {
     flex-direction: column; /* 세로로 쌓기 */

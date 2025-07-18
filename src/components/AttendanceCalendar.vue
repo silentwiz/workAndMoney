@@ -1,11 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useAttendanceStore } from '@/stores/attendance'
+import { useLogStore } from '@/stores/logStore'
+import { useTagStore } from '@/stores/tagStore'
+import { useSettingsStore } from '@/stores/settingsStore'
 import BaseModal from './BaseModal.vue'
 import LogEditor from './LogEditor.vue'
 import DailyLogViewer from './DailyLogViewer.vue'
 
-const store = useAttendanceStore()
+const logStore = useLogStore()
+const tagStore = useTagStore()
+const settingsStore = useSettingsStore()
 
 const isModalOpen = ref(false)
 const selectedDate = ref(null)
@@ -15,8 +19,11 @@ const modalMode = ref('viewer') // 'viewer' 또는 'editor'
 const dailyLogs = ref([]) // 일일 요약에 보여줄 로그들
 const editingLog = ref(null) // 편집할 특정 로그
 // --- ✨ 1. 새로운 UI 제어용 상태 변수 추가 ---
-const indicatorStyle = ref('dot') // 'dot' 또는 'bar'
+const indicatorStyle = ref('bar') // 'dot' 또는 'bar'
 const weekStartDay = ref(2) // 1: 일요일, 2: 월요일
+
+// ✨ 설정 컨트롤 표시 여부 상태 추가
+const showCalendarSettings = ref(false)
 
 const calendarLocale = computed(() => ({
   id: 'ja', // 일본어 로케일 사용
@@ -27,8 +34,8 @@ const calendarLocale = computed(() => ({
 }))
 
 const attributes = computed(() => {
-  const logAttributes = store.allLogsSorted.map((log) => {
-    const tag = store.getTagById(log.tagId)
+  const logAttributes = logStore.allLogsSorted.map((log) => {
+    const tag = tagStore.getTagById(log.tagId)
     const [year, month, day] = log.date.split('-').map(Number)
 
     // ✨ indicatorStyle 값에 따라 다른 속성 객체를 생성
@@ -60,10 +67,10 @@ const attributes = computed(() => {
   })
 
   const paydayAttributes = []
-  if (store.viewedDate && store.tags.length > 0) {
-    const year = store.viewedDate.getFullYear()
-    const month = store.viewedDate.getMonth()
-    store.tags.forEach((tag) => {
+  if (settingsStore.viewedDate && tagStore.tags.length > 0) {
+    const year = settingsStore.viewedDate.getFullYear()
+    const month = settingsStore.viewedDate.getMonth()
+    tagStore.tags.forEach((tag) => {
       if (tag.payday && Number.isInteger(tag.payday)) {
         const thisMonthPayday = new Date(year, month, tag.payday)
         if (thisMonthPayday.getMonth() === month) {
@@ -89,22 +96,16 @@ const attributes = computed(() => {
     ...paydayAttributes,
   ]
 })
-const calendarViewDate = computed(() => store.viewedDate)
+const calendarViewDate = computed(() => settingsStore.viewedDate)
 
 // 1. 달력이 바뀌면 스토어의 setViewedDate 액션을 직접 호출합니다.
 const handlePageUpdate = (pages) => {
   if (pages && pages.length > 0) {
-    store.setViewedDate(pages[0].viewDate)
+    settingsStore.setViewedDate(pages[0].viewDate)
   }
 }
 
-// 숫자 포맷 함수
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'JPY',
-  }).format(value)
-}
+import { formatCurrency } from '@/utils/formatters'
 
 const handleDayClick = (day) => {
   // .toISOString() 대신, 로컬 시간대 기준으로 문자열 생성
@@ -113,7 +114,7 @@ const handleDayClick = (day) => {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const dayOfMonth = String(date.getDate()).padStart(2, '0')
   const dateStr = `${year}-${month}-${dayOfMonth}`
-  const logsForDay = store.getLogsByDate(dateStr)
+  const logsForDay = logStore.getLogsByDate(dateStr)
 
   selectedDate.value = day.date
 
@@ -148,7 +149,7 @@ const requestDeleteLog = (log) => {
 const confirmDelete = () => {
   // ✨ 수정 3: 저장된 log 객체에서 id와 date를 추출하여 올바르게 전달
   if (logToDelete.value) {
-    store.deleteLog(logToDelete.value.id, logToDelete.value.date)
+    logStore.deleteLog(logToDelete.value.id, logToDelete.value.date)
   }
 
   isDeleteConfirmOpen.value = false
@@ -159,19 +160,25 @@ const confirmDelete = () => {
   <div class="calendar-container">
     <div class="header-bar">
       <h2>勤務カレンダー</h2>
-      <div class="calendar-controls">
-        <label>週の開始曜日:</label><br />
-        <button @click="weekStartDay = 1" :class="{ active: weekStartDay === 1 }">日</button>
-        <button @click="weekStartDay = 2" :class="{ active: weekStartDay === 2 }">月</button>
-        <span class="divider">|</span>
-        <label>表示スタイル:</label>
-        <button @click="indicatorStyle = 'dot'" :class="{ active: indicatorStyle === 'dot' }">
-          点
-        </button>
-        <button @click="indicatorStyle = 'bar'" :class="{ active: indicatorStyle === 'bar' }">
-          棒
-        </button>
-      </div>
+      <!-- ✨ 설정 토글 버튼 추가 -->
+      <button @click="showCalendarSettings = !showCalendarSettings" class="settings-toggle-btn">
+        {{ showCalendarSettings ? '設定を隠す' : '設定を表示' }}
+      </button>
+    </div>
+
+    <!-- ✨ 설정 컨트롤을 v-show로 감싸고, 모바일에서만 보이도록 클래스 추가 -->
+    <div v-show="showCalendarSettings" class="calendar-controls">
+      <label>週の開始曜日:</label><br />
+      <button @click="weekStartDay = 1" :class="{ active: weekStartDay === 1 }">日</button>
+      <button @click="weekStartDay = 2" :class="{ active: weekStartDay === 2 }">月</button>
+      <span class="divider">|</span>
+      <label>表示スタイル:</label>
+      <button @click="indicatorStyle = 'dot'" :class="{ active: indicatorStyle === 'dot' }">
+        点
+      </button>
+      <button @click="indicatorStyle = 'bar'" :class="{ active: indicatorStyle === 'bar' }">
+        棒
+      </button>
     </div>
 
     <VCalendar
@@ -246,40 +253,78 @@ const confirmDelete = () => {
   color: #ccc;
 }
 
-.viewed-month-wage {
-  font-size: 16px;
-  background-color: #f0f2f5;
+/* 설정 토글 버튼 스타일 */
+.settings-toggle-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
   padding: 8px 12px;
-  border-radius: 6px;
-}
-.viewed-month-wage strong {
-  color: #2c3e50;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
 }
 
-.tag-wage-details {
-  background-color: #f0f2f5;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-bottom: 15px;
+/* 모바일 (기본) 스타일 */
+@media (max-width: 768px) {
+  .header-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .calendar-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  .calendar-controls label {
+    width: 100%;
+    text-align: left;
+  }
+  .calendar-controls button {
+    width: 100%;
+    padding: 8px;
+  }
+  .divider {
+    display: none;
+  }
+  .calendar-container {
+    margin-top: 15px;
+    padding: 10px;
+  }
 }
-.tag-wage-details ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-.tag-wage-details li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-}
-.tag-indicator {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+
+/* PC (769px 이상) 스타일 */
+@media (min-width: 769px) {
+  .settings-toggle-btn {
+    display: none; /* PC에서는 설정 토글 버튼 숨기기 */
+  }
+  /* PC에서는 calendar-controls를 항상 보이도록 */
+  .calendar-controls {
+    display: flex !important; /* PC에서는 항상 보이도록 */
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    margin-top: 0;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+  }
+  .calendar-controls label {
+    width: auto;
+    text-align: left;
+  }
+  .calendar-controls button {
+    width: auto;
+    padding: 4px 10px;
+  }
+  .divider {
+    display: inline; /* PC에서는 다시 보이도록 */
+  }
 }
 </style>

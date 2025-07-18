@@ -1,22 +1,19 @@
 <script setup>
 import { ref } from 'vue'
-import { useAttendanceStore } from '@/stores/attendance'
-const store = useAttendanceStore()
+import { useLogStore } from '@/stores/logStore'
+import { useTagStore } from '@/stores/tagStore'
+import { useSettingsStore } from '@/stores/settingsStore'
+const logStore = useLogStore()
+const tagStore = useTagStore()
+const settingsStore = useSettingsStore()
 
 const fileInput = ref(null)
 
-// 급여 표시를 위한 formatCurrency 함수
-const formatCurrency = (value) => {
-  if (typeof value !== 'number') return ''
-  return new Intl.NumberFormat('ja-JP', {
-    style: 'currency',
-    currency: 'JPY',
-  }).format(value)
-}
+import { formatCurrency } from '@/utils/formatters'
 
 // 데이터 내보내기/가져오기 핸들러
 const handleExport = () => {
-  store.exportUserData()
+  settingsStore.exportUserData()
 }
 
 const handleImport = () => {
@@ -27,7 +24,7 @@ const handleImport = () => {
   }
   const reader = new FileReader()
   reader.onload = (event) => {
-    store.importUserData(event.target.result)
+    settingsStore.importUserData(event.target.result)
   }
   reader.readAsText(file)
 }
@@ -46,14 +43,14 @@ const handleImport = () => {
         <span class="col-wage">純収入</span>
       </div>
 
-      <div v-for="log in store.paginatedLogs" :key="log.id" class="log-row">
+      <div v-for="log in logStore.paginatedLogs" :key="log.id" class="log-row">
         <span class="col-modified">
           <span v-if="log.modifiedAt">{{ new Date(log.modifiedAt).toLocaleString('ja-JP') }}</span>
         </span>
         <span class="col-date">{{ log.date }}</span>
         <span class="col-tag">
-          <span class="tag-badge" :style="{ backgroundColor: store.getTagById(log.tagId)?.color }">
-            {{ store.getTagById(log.tagId)?.name || 'N/A' }}
+          <span class="tag-badge" :style="{ backgroundColor: tagStore.getTagById(log.tagId)?.color }">
+            {{ tagStore.getTagById(log.tagId)?.name || 'N/A' }}
           </span>
         </span>
         <span class="col-time">
@@ -69,27 +66,27 @@ const handleImport = () => {
       </div>
     </div>
 
-    <div class="pagination-controls" v-if="store.totalPages > 1">
-      <button @click="store.goToPage(1)" :disabled="store.currentPage === 1">&lt;&lt;</button>
-      <button @click="store.goToPage(store.currentPage - 1)" :disabled="store.currentPage === 1">
+    <div class="pagination-controls" v-if="logStore.totalPages > 1">
+      <button @click="logStore.goToPage(1)" :disabled="logStore.currentPage === 1">&lt;&lt;</button>
+      <button @click="logStore.goToPage(logStore.currentPage - 1)" :disabled="logStore.currentPage === 1">
         &lt;
       </button>
-      <span> Page {{ store.currentPage }} of {{ store.totalPages }} </span>
+      <span> Page {{ logStore.currentPage }} of {{ logStore.totalPages }} </span>
       <button
-        @click="store.goToPage(store.currentPage + 1)"
-        :disabled="store.currentPage === store.totalPages"
+        @click="logStore.goToPage(logStore.currentPage + 1)"
+        :disabled="logStore.currentPage === logStore.totalPages"
       >
         &gt;
       </button>
       <button
-        @click="store.goToPage(store.totalPages)"
-        :disabled="store.currentPage === store.totalPages"
+        @click="logStore.goToPage(logStore.totalPages)"
+        :disabled="logStore.currentPage === logStore.totalPages"
       >
         &gt;&gt;
       </button>
     </div>
 
-    <p v-if="store.allLogsSorted.length === 0" class="no-logs">まだ記録がありません。</p>
+    <p v-if="logStore.allLogsSorted.length === 0" class="no-logs">まだ記録がありません。</p>
   </div>
 
   <div class="section">
@@ -203,8 +200,8 @@ h2 {
 .col-expense {
   flex: 1;
   text-align: right;
-  font-size: 0.5em;
-} /* ✨ 추가 */
+  font-size: 0.8em;
+} /* ✨ 수정: 폰트 크기 조정 */
 
 /* ✨ --- 스마트폰 (모바일) 반응형 스타일 --- ✨ */
 /* 화면 너비가 768px 이하일 때 적용됩니다. */
@@ -217,15 +214,15 @@ h2 {
   .log-row {
     flex-direction: column;
     align-items: flex-start;
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 10px; /* ✨ 수정: 패딩 줄임 */
+    margin-bottom: 8px; /* ✨ 수정: 마진 줄임 */
     border: 1px solid #eee;
     border-radius: 8px;
   }
   /* 각 데이터 항목이 한 줄을 모두 차지하도록 합니다. */
   .cell {
     width: 100%;
-    padding: 6px 0;
+    padding: 5px 0; /* ✨ 수정: 패딩 줄임 */
     display: flex;
     justify-content: space-between;
   }
@@ -235,6 +232,22 @@ h2 {
     font-weight: bold;
     margin-right: 10px;
     display: inline-block;
+    font-size: 0.9em; /* ✨ 추가: 라벨 폰트 크기 조정 */
+  }
+  .col-modified {
+    font-size: 0.8em; /* ✨ 수정: 폰트 크기 조정 */
+  }
+  .col-date {
+    font-size: 0.9em;
+  }
+  .col-tag {
+    font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
+  }
+  .col-time {
+    font-size: 0.9em; /* ✨ 수정: 폰트 크기 조정 */
+  }
+  .col-wage {
+    font-size: 1.1em; /* ✨ 수정: 폰트 크기 조정 */
   }
   .col-tag,
   .col-wage {
@@ -245,10 +258,25 @@ h2 {
     font-weight: bold;
     font-size: 1em;
   }
+
+  /* 데이터 관리 섹션 버튼 및 입력 필드 조정 */
+  .section .input-group button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1em;
+  }
+  .section .input-group input[type='file'] {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .section .import-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 .col-expense {
   flex: 1;
   text-align: right;
-  font-size: 0.7em;
-} /* ✨ 추가 */
+  font-size: 0.8em;
+} /* ✨ 수정: 폰트 크기 조정 */
 </style>

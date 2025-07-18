@@ -22,5 +22,9 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    server: {
+      host: true, // <-- 이것만 추가해 주면 됩니다!
+      port: 3000, // 포트 충돌 나면 3001로 자동 변경됨
+    },
   }
 })

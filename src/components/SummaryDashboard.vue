@@ -1,34 +1,27 @@
 <script setup>
-import { useAttendanceStore } from '@/stores/attendance'
+import { useLogStore } from '@/stores/logStore'
 
-const store = useAttendanceStore()
+const logStore = useLogStore()
 
-// LogList에서 사용했던 숫자 포맷 함수
-const formatCurrency = (value) => {
-  if (typeof value !== 'number') return ''
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'JPY',
-  }).format(value)
-}
+import { formatCurrency } from '@/utils/formatters'
 </script>
 
 <template>
   <div class="dashboard">
     <div class="summary-card">
       <h4>今週の予想純収入</h4>
-      <p>{{ formatCurrency(store.netWeeklyWage) }}</p>
+      <p>{{ formatCurrency(logStore.netWeeklyWage) }}</p>
       <div class="details">
-        <span class="income">+ {{ formatCurrency(store.weeklyWage) }}</span>
-        <span class="expense">- {{ formatCurrency(store.weeklyExpenses) }}</span>
+        <span class="income">+ {{ formatCurrency(logStore.weeklyWage) }}</span>
+        <span class="expense">- {{ formatCurrency(logStore.weeklyExpenses) }}</span>
       </div>
     </div>
     <div class="summary-card">
       <h4>今月の予想純収入</h4>
-      <p>{{ formatCurrency(store.netMonthlyWage) }}</p>
+      <p>{{ formatCurrency(logStore.netMonthlyWage) }}</p>
       <div class="details">
-        <span class="income">+ {{ formatCurrency(store.monthlyWage) }}</span>
-        <span class="expense">- {{ formatCurrency(store.monthlyExpenses) }}</span>
+        <span class="income">+ {{ formatCurrency(logStore.monthlyWage) }}</span>
+        <span class="expense">- {{ formatCurrency(logStore.monthlyExpenses) }}</span>
       </div>
     </div>
   </div>
@@ -43,44 +36,42 @@ const formatCurrency = (value) => {
 }
 .summary-card {
   background-color: #ffffff;
-  padding: 20px;
+  padding: 15px; /* ✨ 수정: 패딩 줄임 */
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .summary-card h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0; /* ✨ 수정: 마진 줄임 */
   color: #555;
-  font-size: 16px;
+  font-size: 15px; /* ✨ 수정: 폰트 크기 조정 */
 }
 .summary-card p {
   margin: 0;
-  color: #2c3e50; /* 순수입은 진한 색으로 */
-  font-size: 24px;
+  color: #2c3e50;
+  font-size: 22px; /* ✨ 수정: 폰트 크기 조정 */
   font-weight: bold;
 }
-/* ✨ 추가된 스타일 */
 .details {
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: 8px; /* ✨ 수정: 마진 줄임 */
+  font-size: 13px; /* ✨ 수정: 폰트 크기 조정 */
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between; /* ✨ 수정: space-around -> space-between */
 }
 .income {
-  color: #42b883; /* 초록색 */
+  color: #42b883;
 }
 .expense {
-  color: #e53935; /* 빨간색 */
+  color: #e53935;
 }
 
 /* --- 모바일 반응형 스타일 --- */
 @media (max-width: 768px) {
   .dashboard {
-    /* 2열 그리드 -> 1열 그리드로 변경 */
     grid-template-columns: 1fr;
   }
   .summary-card p {
-    font-size: 20px; /* 모바일에서 글자 크기 살짝 줄임 */
+    font-size: 18px; /* ✨ 수정: 폰트 크기 조정 */
   }
 }
 </style>

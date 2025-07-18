@@ -1,29 +1,22 @@
 <script setup>
-import { useAttendanceStore } from '@/stores/attendance'
+import { useTagStore } from '@/stores/tagStore'
 
 // ✨ 스토어를 가져오는 이 한 줄이면 모든 준비가 끝납니다.
-const store = useAttendanceStore()
+const tagStore = useTagStore()
 
-// 통화 포맷 함수는 그대로 둡니다.
-const formatCurrency = (value) => {
-  if (typeof value !== 'number') return ''
-  return new Intl.NumberFormat('ja-JP', {
-    style: 'currency',
-    currency: 'JPY',
-  }).format(value)
-}
+import { formatCurrency } from '@/utils/formatters'
 </script>
 
 <template>
   <div class="summary-container">
-    <div v-if="store.tagSummaries.length > 0" class="results-table">
+    <div v-if="tagStore.tagSummaries.length > 0" class="results-table">
       <div class="result-row header">
         <span class="col-tag">職場</span>
         <span class="col-period">対象期間</span>
         <span class="col-payday">給料日</span>
         <span class="col-wage">予想給料</span>
       </div>
-      <div v-for="item in store.tagSummaries" :key="item.tagName" class="result-row">
+      <div v-for="item in tagStore.tagSummaries" :key="item.tagName" class="result-row">
         <span class="col-tag" data-label="職場">
           <span class="tag-indicator" :style="{ backgroundColor: item.tagColor }"></span>
           {{ item.tagName }}
@@ -43,8 +36,8 @@ const formatCurrency = (value) => {
 <style scoped>
 /* 기존 스타일은 그대로 유지합니다. */
 .summary-container {
-  margin-top: 20px;
-  padding: 20px;
+  margin-top: 15px; /* ✨ 수정: 마진 줄임 */
+  padding: 15px; /* ✨ 수정: 패딩 줄임 */
   background-color: #f9f9f9;
   border-radius: 8px;
 }
@@ -52,19 +45,19 @@ const formatCurrency = (value) => {
   border-top: 1px solid #eee;
 }
 .summary-container {
-  margin-top: 20px;
-  padding: 20px;
+  margin-top: 15px; /* ✨ 수정: 마진 줄임 */
+  padding: 15px; /* ✨ 수정: 패딩 줄임 */
   background-color: #f9f9f9;
   border-radius: 8px;
 }
 .controls {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 15px;
+  margin-bottom: 10px; /* ✨ 수정: 마진 줄임 */
 }
 select,
 button {
-  padding: 8px 12px;
+  padding: 6px 10px; /* ✨ 수정: 패딩 줄임 */
   border: 1px solid #ccc;
   border-radius: 4px;
 }
@@ -80,7 +73,7 @@ button {
 .result-row {
   display: flex;
   align-items: center;
-  padding: 12px 5px;
+  padding: 10px 5px; /* ✨ 수정: 패딩 줄임 */
   border-bottom: 1px solid #eee;
 }
 .result-row.header {
@@ -91,63 +84,66 @@ button {
   flex: 1.5;
   display: flex;
   align-items: center;
+  font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
 }
 .col-period {
   flex: 1;
   text-align: center;
-  font-size: 14px;
+  font-size: 0.9em; /* ✨ 수정: 폰트 크기 조정 */
 }
 .col-payday {
   flex: 1;
   text-align: center;
-  font-size: 14px;
+  font-size: 0.9em; /* ✨ 수정: 폰트 크기 조정 */
 }
 .col-wage {
   flex: 1.5;
   text-align: right;
   font-weight: bold;
+  font-size: 1em; /* ✨ 수정: 폰트 크기 조정 */
 }
 .result-row.header .col-wage {
   text-align: right;
 }
 .tag-indicator {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 10px; /* ✨ 수정: 크기 줄임 */
+  height: 10px; /* ✨ 수정: 크기 줄임 */
   border-radius: 50%;
-  margin-right: 8px;
+  margin-right: 6px; /* ✨ 수정: 마진 줄임 */
 }
 .no-data-message {
   text-align: center;
   color: #777;
-  padding: 20px 0;
+  padding: 15px 0; /* ✨ 수정: 패딩 줄임 */
 }
 /* --- 모바일 반응형 스타일 --- */
 @media (max-width: 768px) {
   .result-row.header {
-    display: none; /* 모바일에선 제목 행 숨김 */
+    display: none;
   }
   .result-row {
     flex-direction: column;
     align-items: flex-start;
-    padding: 10px;
+    padding: 8px; /* ✨ 수정: 패딩 줄임 */
     border: 1px solid #eee;
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* ✨ 수정: 마진 줄임 */
     border-radius: 6px;
   }
   .result-row > span {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    padding: 4px 0;
+    padding: 3px 0; /* ✨ 수정: 패딩 줄임 */
+    font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
     text-align: right;
   }
-  /* 각 데이터 앞에 제목을 붙여줌 */
   .result-row > span::before {
-    content: attr(data-label); /* data-label 속성값을 가져옴 */
+    content: attr(data-label);
     font-weight: bold;
     text-align: left;
-    margin-right: 10px;
+    margin-right: 8px; /* ✨ 수정: 마진 줄임 */
+    font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
   }
   .col-tag::before {
     content: '職場';
