@@ -42,47 +42,116 @@ export const useTagStore = defineStore('tag', () => {
 
   const getTagById = computed(() => (tagId) => tags.value.find((t) => t.id === tagId))
 
-  const calculateWage = (date, start, end, tagId, restMinutes = 0) => {
-    const tag = tags.value.find((t) => t.id === tagId)
-    if (!tag) return { totalWage: 0, totalHours: 0 }
+  const calculateWage = (dateStr, start, end, tagId, restMinutes = 0) => {
+    const tag = tags.value.find((t) => t.id === tagId);
+    if (!tag) return { totalWage: 0, totalHours: 0 };
 
-    const startDate = new Date(`${date}T${start}`)
-    const endDate = new Date(`${date}T${end}`)
+    let totalGrossWage = 0;
 
-    let totalMinutes = (endDate - startDate) / (1000 * 60)
-    if (totalMinutes < 0) {
-      totalMinutes += 24 * 60
+    let startDate = new Date(`${dateStr}T${start}`);
+    let endDate = new Date(`${dateStr}T${end}`);
+
+    // 다음 날로 넘어가는 경우 처리
+    if (endDate < startDate) {
+      endDate.setDate(endDate.getDate() + 1);
     }
 
-    const totalHours = totalMinutes / 60
-    const payableMinutes = Math.max(0, totalMinutes - restMinutes)
+    const getRate = (currentDate) => {
+      const dayOfWeek = currentDate.getDay();
+      const hour = currentDate.getHours();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 일요일, 6: 토요일
 
-    let grossWage = 0
-    let currentMinute = new Date(startDate)
-
-    for (let i = 0; i < totalMinutes; i++) {
-      const dayOfWeek = currentMinute.getDay()
-      const hour = currentMinute.getHours()
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-      const isNight = hour >= tag.nightStartHour || hour < tag.nightEndHour
-
-      let applicableRate = tag.baseRate
+      // 야간 시간 계산 로직 개선: nightStartHour가 nightEndHour보다 크면 자정을 넘어가는 야간
+      const isNight = tag.nightStartHour < tag.nightEndHour
+        ? (hour >= tag.nightStartHour && hour < tag.nightEndHour)
+        : (hour >= tag.nightStartHour || hour < tag.nightEndHour);
 
       if (isWeekend && isNight) {
-        applicableRate = tag.weekendNightRate
+        return tag.weekendNightRate;
       } else if (isWeekend) {
-        applicableRate = tag.weekendRate
+        return tag.weekendRate;
       } else if (isNight) {
-        applicableRate = tag.nightRate
+        return tag.nightRate;
+      } else {
+        return tag.baseRate;
+      }
+    };
+
+    // 시간 이벤트 포인트 생성 (요율이 변하는 지점)
+    const eventPoints = new Set();
+    eventPoints.add(startDate.getTime());
+    eventPoints.add(endDate.getTime());
+
+    // 야간 시작/종료 시간 추가
+    let tempDate = new Date(startDate);
+    while (tempDate < endDate) {
+      const nextDay = new Date(tempDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      nextDay.setHours(0, 0, 0, 0); // 다음 날 0시
+
+      const nightStartToday = new Date(tempDate);
+      nightStartToday.setHours(tag.nightStartHour, 0, 0, 0);
+      if (nightStartToday >= startDate && nightStartToday < endDate) {
+        eventPoints.add(nightStartToday.getTime());
       }
 
-      grossWage += applicableRate / 60
-      currentMinute.setMinutes(currentMinute.getMinutes() + 1)
+      const nightEndToday = new Date(tempDate);
+      nightEndToday.setHours(tag.nightEndHour, 0, 0, 0);
+      if (nightEndToday >= startDate && nightEndToday < endDate) {
+        eventPoints.add(nightEndToday.getTime());
+      }
+
+      // 다음 날의 야간 시작/종료 시간도 고려 (자정을 넘어가는 경우)
+      const nightStartNextDay = new Date(tempDate);
+      nightStartNextDay.setDate(nightStartNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1));
+      nightStartNextDay.setHours(tag.nightStartHour, 0, 0, 0);
+      if (nightStartNextDay >= startDate && nightStartNextDay < endDate) {
+        eventPoints.add(nightStartNextDay.getTime());
+      }
+
+      const nightEndNextDay = new Date(tempDate);
+      nightEndNextDay.setDate(nightEndNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1));
+      nightEndNextDay.setHours(tag.nightEndHour, 0, 0, 0);
+      if (nightEndNextDay >= startDate && nightEndNextDay < endDate) {
+        eventPoints.add(nightEndNextDay.getTime());
+      }
+
+      // 자정 (날짜 변경)
+      const midnight = new Date(tempDate);
+      midnight.setDate(midnight.getDate() + 1);
+      midnight.setHours(0, 0, 0, 0);
+      if (midnight > startDate && midnight < endDate) {
+        eventPoints.add(midnight.getTime());
+      }
+
+      tempDate = nextDay; // 다음 날로 이동
     }
 
-    const effectiveWage = totalHours > 0 ? (grossWage / totalHours) * (payableMinutes / 60) : 0
+    const sortedEventPoints = Array.from(eventPoints).sort((a, b) => a - b);
 
-    return { totalWage: effectiveWage, totalHours: totalHours }
+    for (let i = 0; i < sortedEventPoints.length - 1; i++) {
+      const segmentStart = new Date(sortedEventPoints[i]);
+      const segmentEnd = new Date(sortedEventPoints[i + 1]);
+
+      // 현재 구간이 실제 근무 시간 범위 내에 있는지 확인
+      if (segmentStart >= endDate || segmentEnd <= startDate) {
+        continue;
+      }
+
+      // 구간의 중간 지점의 요율을 사용 (구간 내내 요율이 동일하다고 가정)
+      const midPoint = new Date((segmentStart.getTime() + segmentEnd.getTime()) / 2);
+      const applicableRate = getRate(midPoint);
+
+      const segmentDurationMinutes = (segmentEnd - segmentStart) / (1000 * 60);
+      totalGrossWage += (applicableRate / 60) * segmentDurationMinutes;
+    }
+
+    const actualWorkedMinutes = (endDate - startDate) / (1000 * 60);
+    const payableMinutes = Math.max(0, actualWorkedMinutes - restMinutes);
+
+    const effectiveWage = actualWorkedMinutes > 0 ? (totalGrossWage / actualWorkedMinutes) * payableMinutes : 0;
+
+    return { totalWage: effectiveWage, totalHours: payableMinutes / 60 };
   }
 
   const tagSummaries = computed(() => {
