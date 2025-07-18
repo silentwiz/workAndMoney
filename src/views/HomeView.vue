@@ -6,6 +6,7 @@ import LogList from '@/components/LogList.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import SettingsEditor from '@/components/SettingsEditor.vue'
 import TagSummary from '@/components/TagSummary.vue'
+import FloatingSaveButton from '@/components/FloatingSaveButton.vue' // ✨ 플로팅 버튼 import
 import { useLogStore } from '@/stores/logStore'
 import { useTagStore } from '@/stores/tagStore'
 
@@ -16,7 +17,7 @@ const isSettingsModalOpen = ref(false)
 const showLiveControls = ref(false)
 
 // ✨ 저장 피드백 관련 상태
-const saveStatus = ref('') // 'saving', 'success', 'error'
+const saveStatus = ref('') // '', 'saving', 'success', 'error'
 const saveMessage = ref('')
 
 // ✨ 실시간 근무 기록 관련 상태 및 함수
@@ -87,7 +88,7 @@ const endRest = () => {
 const endWork = async () => {
   saveStatus.value = 'saving'
   saveMessage.value = '保存中...'
-  const result = await logStore.endTracking() // endTracking은 이제 결과를 반환해야 합니다.
+  const result = await logStore.endTracking()
   if (result.success) {
     saveStatus.value = 'success'
     saveMessage.value = '勤務記録を保存しました。'
@@ -125,14 +126,11 @@ onMounted(() => {
 
 <template>
   <main class="home-layout">
+    <FloatingSaveButton :status="saveStatus" :message="saveMessage" @save="handleSave" />
     <div class="main-content">
       <div class="main-header">
         <h1>勤怠管理</h1>
         <div class="header-controls">
-          <button class="save-button" @click="handleSave" :disabled="saveStatus === 'saving'">
-            データ保存
-          </button>
-          <span :class="['save-status', saveStatus]">{{ saveMessage }}</span>
           <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
         </div>
       </div>
@@ -209,34 +207,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.save-button {
-  padding: 8px 12px;
-  font-size: 14px;
-  background-color: #42b883;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.save-button:disabled {
-  background-color: #a5d6a7;
-  cursor: not-allowed;
-}
-
-.save-status {
-  font-size: 14px;
-  transition: opacity 0.3s ease;
-}
-
-.save-status.success {
-  color: #42b883;
-}
-
-.save-status.error {
-  color: #e53935;
 }
 
 h1 {
