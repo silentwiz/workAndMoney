@@ -1,14 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, watch, computed } from 'vue'
 
+function debounce(fn, delay) {
+  let timeoutId
+  return (...args) => {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
 export const useAttendanceStore = defineStore('attendance', () => {
-  // --- State ---
+  // ------------------------------------ State ------------------------------------
   const currentUser = ref(null)
   const attendanceLogs = ref([])
   const tags = ref([])
   const viewedDate = ref(new Date())
+  const isLoading = ref(false)
 
-  // --- Actions ---
+  // ------------------------------------- Actions ------------------------------------
   const saveDataToServer = async () => {
     if (!currentUser.value) return
 
@@ -30,6 +39,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
       console.error('Failed to save data to server:', error)
     }
   }
+  const debouncedSave = debounce(saveDataToServer, 2000)
 
   const deleteLog = (logId) => {
     const index = attendanceLogs.value.findIndex((log) => log.id === logId)
@@ -97,7 +107,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
 
   const loadUser = async (username) => {
     currentUser.value = username
-
+    isLoading.value = true
     try {
       // 1. 우리 백엔드 API에 데이터를 요청합니다.
       const response = await fetch(`/api/data?user=${username}`)
@@ -105,6 +115,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
         throw new Error('Server response was not ok')
       }
       const data = await response.json()
+      isLoading.value = false
 
       // 2. 서버에서 받은 데이터로 상태를 업데이트합니다.
       attendanceLogs.value = data.logs || []
@@ -216,7 +227,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
-  // --- Getters / Computed ---
+  // ------------------ Getters / Computed ------------------
 
   // 이번 주 총 지출
   const weeklyExpenses = computed(() => {
@@ -320,6 +331,41 @@ export const useAttendanceStore = defineStore('attendance', () => {
       .reduce((total, log) => total + log.dailyWage, 0)
   })
 
+  const tagSummaries = computed(() => {
+    const today = new Date()
+
+    return tags.value.map((tag) => {
+      // --- TagSummary.vue에 있던 로직을 그대로 가져옴 ---
+      const closingDay = tag.periodStartDay
+      let periodEndDate = new Date(today.getFullYear(), today.getMonth(), closingDay)
+      if (today.getDate() > closingDay) {
+        periodEndDate.setMonth(periodEndDate.getMonth() + 1)
+      }
+      let periodStartDate = new Date(periodEndDate)
+      periodStartDate.setMonth(periodStartDate.getMonth() - 1)
+      periodStartDate.setDate(periodStartDate.getDate() + 1)
+      // --- 로직 끝 ---
+
+      const startDateStr = periodStartDate.toISOString().slice(0, 10)
+      const endDateStr = periodEndDate.toISOString().slice(0, 10)
+
+      const periodLogs = attendanceLogs.value.filter((log) => {
+        return log.tagId === tag.id && log.date >= startDateStr && log.date <= endDateStr
+      })
+
+      const totalWage = periodLogs.reduce((sum, log) => sum + log.dailyWage, 0)
+      const totalExpenses = periodLogs.reduce((sum, log) => sum + (log.expenses || 0), 0)
+
+      return {
+        tagName: tag.name,
+        tagColor: tag.color,
+        payday: tag.payday,
+        period: `${startDateStr.slice(5)} ~ ${endDateStr.slice(5)}`,
+        totalWage: totalWage - totalExpenses,
+      }
+    })
+  })
+
   // --- Watch ---
   watch(
     () => ({
@@ -328,7 +374,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }),
     () => {
       // 데이터가 변경될 때마다 서버에 저장 함수를 호출
-      saveDataToServer()
+      debouncedSave()
     },
     { deep: true },
   )
@@ -336,7 +382,6 @@ export const useAttendanceStore = defineStore('attendance', () => {
   // --- Return ---
   return {
     currentUser,
-    loadUser,
     logout,
     attendanceLogs,
     tags,
@@ -360,5 +405,8 @@ export const useAttendanceStore = defineStore('attendance', () => {
     monthlyExpenses,
     netWeeklyWage,
     netMonthlyWage,
+    tagSummaries,
+    isLoading,
+    loadUser,
   }
 })

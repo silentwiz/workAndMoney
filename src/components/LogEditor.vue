@@ -17,6 +17,7 @@ const selectedTagId = ref(null)
 const logId = ref(null)
 const restMinutes = ref(0)
 const expenses = ref(0) // ✨ 지출 상태 변수
+const validationError = ref('')
 
 watchEffect(() => {
   if (props.logData) {
@@ -45,23 +46,28 @@ const year = date.getFullYear()
 const month = String(date.getMonth() + 1).padStart(2, '0')
 const dayOfMonth = String(date.getDate()).padStart(2, '0')
 const formattedDate = `${year}-${month}-${dayOfMonth}`
+
 const handleSubmit = () => {
-  if (startTime.value && endTime.value && selectedTagId.value) {
-    // 이제 Pinia 스토어의 addLog 액션에 날짜 정보도 함께 전달해야 합니다.
-    // (이후 스토어 코드를 수정할 예정)
-    store.saveLog({
-      id: logId.value,
-      date: formattedDate, // 선택된 날짜
-      start: startTime.value,
-      end: endTime.value,
-      tagId: selectedTagId.value,
-      restMinutes: Number(restMinutes.value),
-      expenses: Number(expenses.value),
-    })
-    emit('close') // 저장 후 모달 닫기 이벤트 발생
-  } else {
-    alert('職場と勤務時間を入力してください')
+  if (!selectedTagId.value) {
+    validationError.value = '職場を選択してください。' // ✨ 구체적인 에러 메시지 설정
+    return
   }
+  if (!startTime.value || !endTime.value) {
+    validationError.value = '勤務時間を入力してください。'
+    return
+  }
+
+  validationError.value = '' // ✨ 성공 시 에러 메시지 초기화
+  store.saveLog({
+    id: logId.value,
+    date: formattedDate, // 선택된 날짜
+    start: startTime.value,
+    end: endTime.value,
+    tagId: selectedTagId.value,
+    restMinutes: Number(restMinutes.value),
+    expenses: Number(expenses.value),
+  })
+  emit('close')
 }
 </script>
 
@@ -94,12 +100,18 @@ const handleSubmit = () => {
         <input id="expense" type="number" v-model="expenses" min="0" step="100" />
         <span>円</span>
       </div>
+      <div v-if="validationError" class="error-message">{{ validationError }}</div>
       <button @click="handleSubmit">保存</button>
     </div>
   </div>
 </template>
 
 <style scoped>
+.error-message {
+  color: #e53935; /* 빨간색 */
+  text-align: center;
+  margin-top: 10px;
+}
 h3 {
   text-align: center;
   margin-bottom: 20px;
