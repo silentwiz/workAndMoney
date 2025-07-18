@@ -13,13 +13,34 @@ const logStore = useLogStore()
 const tagStore = useTagStore()
 
 const isSettingsModalOpen = ref(false)
-const showLiveControls = ref(false) // ✨ 실시간 근무 기록 컨트롤 표시 여부
+const showLiveControls = ref(false)
+
+// ✨ 저장 피드백 관련 상태
+const saveStatus = ref('') // 'saving', 'success', 'error'
+const saveMessage = ref('')
 
 // ✨ 실시간 근무 기록 관련 상태 및 함수
-const selectedLiveTagId = ref(null) // 실시간 기록할 태그 ID
-const liveStatusMessage = ref('待機中') // 현재 상태 메시지
-const liveWorkedTime = ref('00:00:00') // 실시간 근무 시간
+const selectedLiveTagId = ref(null)
+const liveStatusMessage = ref('待機中')
+const liveWorkedTime = ref('00:00:00')
 let timerInterval = null
+
+const handleSave = async () => {
+  saveStatus.value = 'saving'
+  saveMessage.value = '保存中...'
+  const result = await logStore.saveDataToServer()
+  if (result.success) {
+    saveStatus.value = 'success'
+    saveMessage.value = '保存しました！'
+  } else {
+    saveStatus.value = 'error'
+    saveMessage.value = `エラー: ${result.message}`
+  }
+  setTimeout(() => {
+    saveStatus.value = ''
+    saveMessage.value = ''
+  }, 3000)
+}
 
 const updateLiveTime = () => {
   if (logStore.trackingStartTime) {
@@ -37,7 +58,9 @@ const updateLiveTime = () => {
     const minutes = Math.floor((elapsedMilliseconds % (1000 * 60 * 60)) / (1000 * 60))
     const seconds = Math.floor((elapsedMilliseconds % (1000 * 60)) / 1000)
 
-    liveWorkedTime.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    liveWorkedTime.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(
+      seconds,
+    ).padStart(2, '0')}`
   }
 }
 
@@ -61,12 +84,27 @@ const endRest = () => {
   liveStatusMessage.value = '勤務中'
 }
 
-const endWork = () => {
-  logStore.endTracking()
+const endWork = async () => {
+  saveStatus.value = 'saving'
+  saveMessage.value = '保存中...'
+  const result = await logStore.endTracking() // endTracking은 이제 결과를 반환해야 합니다.
+  if (result.success) {
+    saveStatus.value = 'success'
+    saveMessage.value = '勤務記録を保存しました。'
+  } else {
+    saveStatus.value = 'error'
+    saveMessage.value = `エラー: ${result.message}`
+  }
+
   liveStatusMessage.value = '待機中'
   clearInterval(timerInterval)
   liveWorkedTime.value = '00:00:00'
   selectedLiveTagId.value = null
+
+  setTimeout(() => {
+    saveStatus.value = ''
+    saveMessage.value = ''
+  }, 3000)
 }
 
 onUnmounted(() => {
@@ -90,7 +128,13 @@ onMounted(() => {
     <div class="main-content">
       <div class="main-header">
         <h1>勤怠管理</h1>
-        <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
+        <div class="header-controls">
+          <button class="save-button" @click="handleSave" :disabled="saveStatus === 'saving'">
+            データ保存
+          </button>
+          <span :class="['save-status', saveStatus]">{{ saveMessage }}</span>
+          <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
+        </div>
       </div>
       <AttendanceCalendar />
       <SummaryDashboard />
@@ -159,13 +203,47 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
+.header-controls {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.save-button {
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: #42b883;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.save-status {
+  font-size: 14px;
+  transition: opacity 0.3s ease;
+}
+
+.save-status.success {
+  color: #42b883;
+}
+
+.save-status.error {
+  color: #e53935;
+}
+
 h1 {
   margin: 0;
 }
 
 .settings-button {
-  position: absolute;
-  right: 0;
   padding: 8px 12px;
   font-size: 14px;
   background-color: #f0f2f5;

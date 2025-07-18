@@ -1,31 +1,12 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useLogStore } from './logStore'
 import { useTagStore } from './tagStore'
-import { debounce } from '@/utils/helpers'
-import { fetchData, saveData } from '@/services/api'
+import { fetchData } from '@/services/api'
 
 export const useUserStore = defineStore('user', () => {
   const currentUser = ref(null)
   const isLoading = ref(false)
-
-  const saveDataToServer = async () => {
-    const logStore = useLogStore()
-    const tagStore = useTagStore()
-    if (!currentUser.value) return
-
-    const dataToSave = {
-      logs: logStore.attendanceLogs,
-      tags: tagStore.tags,
-    }
-
-    try {
-      await saveData(currentUser.value, dataToSave)
-    } catch (error) {
-      console.error('Failed to save data to server:', error)
-    }
-  }
-  const debouncedSave = debounce(saveDataToServer, 2000)
 
   const logout = () => {
     const logStore = useLogStore()
@@ -73,24 +54,6 @@ export const useUserStore = defineStore('user', () => {
       isLoading.value = false
     }
   }
-
-  watch(
-    () => {
-      const logStore = useLogStore()
-      const tagStore = useTagStore()
-      return {
-        logs: logStore.attendanceLogs,
-        tags: tagStore.tags,
-        currentUser: currentUser.value,
-      }
-    },
-    (newVal, oldVal) => {
-      if (newVal.currentUser) {
-        debouncedSave()
-      }
-    },
-    { deep: true },
-  )
 
   return {
     currentUser,

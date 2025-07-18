@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useTagStore } from './tagStore'
 import { useUserStore } from './userStore'
+import { saveData } from '@/services/api'
 
 function debounce(fn, delay) {
   let timeoutId
@@ -58,9 +59,10 @@ export const useLogStore = defineStore('log', () => {
   loadStateFromLocalStorage()
 
   // 상태 변경 감지 및 저장
+  const debouncedSaveState = debounce(saveStateToLocalStorage, 200)
   watch([isTracking, trackingStartTime, isResting, restStartTime, accumulatedRestMinutes], () => {
-    saveStateToLocalStorage()
-  })
+    debouncedSaveState()
+  }, { deep: true })
 
   const goToPage = (pageNumber) => {
     currentPage.value = pageNumber
@@ -113,8 +115,8 @@ export const useLogStore = defineStore('log', () => {
     }
   }
 
-  const endTracking = () => {
-    if (!isTracking.value) return
+  const endTracking = async () => {
+    if (!isTracking.value) return { success: false, message: 'Tracking not started.' }
 
     // 휴식 중이었다면 휴식 종료 처리
     if (isResting.value) {
@@ -154,6 +156,8 @@ export const useLogStore = defineStore('log', () => {
     accumulatedRestMinutes.value = 0
     liveLogId.value = null
     liveTagId.value = null
+
+    return await saveDataToServer()
   }
 
   const deleteLog = (logId, date) => {
@@ -282,6 +286,28 @@ export const useLogStore = defineStore('log', () => {
       .reduce((total, log) => total + log.dailyWage, 0)
   })
 
+  const saveDataToServer = async () => {
+    const userStore = useUserStore()
+    const tagStore = useTagStore()
+    if (!userStore.currentUser) {
+      console.error('No user logged in, cannot save data.')
+      return { success: false, message: '로그인된 사용자가 없습니다.' }
+    }
+
+    const dataToSave = {
+      logs: attendanceLogs.value,
+      tags: tagStore.tags,
+    }
+
+    try {
+      await saveData(userStore.currentUser, dataToSave)
+      return { success: true, message: '데이터가 성공적으로 저장되었습니다.' }
+    } catch (error) {
+      console.error('Failed to save data to server:', error)
+      return { success: false, message: `데이터 저장 실패: ${error.message}` }
+    }
+  }
+
   const normalizeLogData = (logsArray) => {
     return logsArray.reduce((acc, log) => {
       const date = log.date
@@ -319,7 +345,7 @@ export const useLogStore = defineStore('log', () => {
     netMonthlyWage,
     allLogsSorted,
     normalizeLogData,
-    // saveDataToServer,
+    saveDataToServer,
 
     // ✨ 실시간 근무 기록 관련 내보내기
     isTracking,
