@@ -126,9 +126,9 @@ export const useTagStore = defineStore('tag', () => {
           tagName: tag.name,
           tagColor: tag.color,
           payday: tag.payday,
-          wageForLog: totalWage,
           period: `${startDateStr.slice(5)} ~ ${endDateStr.slice(5)}`,
-          totalWage: totalWage - totalExpenses,
+          expectedIncome: totalWage,
+          expectedExpense: totalExpenses,
         }
       })
       .filter(Boolean)

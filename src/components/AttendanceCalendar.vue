@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useLogStore } from '@/stores/logStore'
 import { useTagStore } from '@/stores/tagStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -24,6 +24,8 @@ const weekStartDay = ref(2) // 1: 일요일, 2: 월요일
 
 // ✨ 설정 컨트롤 표시 여부 상태 추가
 const showCalendarSettings = ref(false)
+
+
 
 const calendarLocale = computed(() => ({
   id: 'ja', // 일본어 로케일 사용
@@ -181,6 +183,8 @@ const confirmDelete = () => {
       </button>
     </div>
 
+    
+
     <VCalendar
       :attributes="attributes"
       :locale="calendarLocale"
@@ -299,8 +303,8 @@ const confirmDelete = () => {
   }
 }
 
-/* PC (769px 이상) 스타일 */
-@media (min-width: 769px) {
+/* PC (1024px 이상) 스타일 */
+@media (min-width: 1024px) {
   .settings-toggle-btn {
     display: none; /* PC에서는 설정 토글 버튼 숨기기 */
   }
@@ -327,4 +331,6 @@ const confirmDelete = () => {
     display: inline; /* PC에서는 다시 보이도록 */
   }
 }
+
+
 </style>

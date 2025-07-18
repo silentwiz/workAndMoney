@@ -14,10 +14,146 @@ function debounce(fn, delay) {
 export const useLogStore = defineStore('log', () => {
   const attendanceLogs = ref({})
   const currentPage = ref(1)
-  const itemsPerPage = ref(5)
+  const itemsPerPage = ref(10)
+
+  // ✨ 실시간 근무 기록 관련 상태
+  const isTracking = ref(false)
+  const trackingStartTime = ref(null)
+  const isResting = ref(false)
+  const restStartTime = ref(null)
+  const accumulatedRestMinutes = ref(0)
+  const liveLogId = ref(null) // 현재 실시간 추적 중인 로그의 ID
+  const liveTagId = ref(null) // 현재 실시간 추적 중인 로그의 tagId
+
+  // ✨ 로컬 스토리지에 상태 저장
+  const saveStateToLocalStorage = () => {
+    const state = {
+      isTracking: isTracking.value,
+      trackingStartTime: trackingStartTime.value ? trackingStartTime.value.toISOString() : null,
+      isResting: isResting.value,
+      restStartTime: restStartTime.value ? restStartTime.value.toISOString() : null,
+      accumulatedRestMinutes: accumulatedRestMinutes.value,
+      liveLogId: liveLogId.value,
+      liveTagId: liveTagId.value,
+    }
+    localStorage.setItem('logStoreLiveTrackingState', JSON.stringify(state))
+  }
+
+  // ✨ 로컬 스토리지에서 상태 불러오기
+  const loadStateFromLocalStorage = () => {
+    const savedState = localStorage.getItem('logStoreLiveTrackingState')
+    if (savedState) {
+      const state = JSON.parse(savedState)
+      isTracking.value = state.isTracking
+      trackingStartTime.value = state.trackingStartTime ? new Date(state.trackingStartTime) : null
+      isResting.value = state.isResting
+      restStartTime.value = state.restStartTime ? new Date(state.restStartTime) : null
+      accumulatedRestMinutes.value = state.accumulatedRestMinutes
+      liveLogId.value = state.liveLogId || null
+      liveTagId.value = state.liveTagId || null
+    }
+  }
+
+  // 초기 로드 시 상태 불러오기
+  loadStateFromLocalStorage()
+
+  // 상태 변경 감지 및 저장
+  watch([isTracking, trackingStartTime, isResting, restStartTime, accumulatedRestMinutes], () => {
+    saveStateToLocalStorage()
+  })
 
   const goToPage = (pageNumber) => {
     currentPage.value = pageNumber
+  }
+
+  // ✨ 실시간 근무 기록 액션
+  const startTracking = (tagId) => {
+    if (isTracking.value) return
+    isTracking.value = true
+    trackingStartTime.value = new Date()
+    isResting.value = false
+    restStartTime.value = null
+    accumulatedRestMinutes.value = 0
+    // 현재 날짜의 로그에 추가할 임시 로그 데이터 (저장 시 업데이트)
+    const today = new Date().toISOString().slice(0, 10)
+    if (!attendanceLogs.value[today]) {
+      attendanceLogs.value[today] = []
+    }
+    const newLogId = Date.now()
+    attendanceLogs.value[today].push({
+      id: newLogId,
+      date: today,
+      start: trackingStartTime.value.toTimeString().slice(0, 5),
+      end: '',
+      tagId: tagId,
+      restMinutes: 0,
+      expenses: 0,
+      workedHours: 0,
+      dailyWage: 0,
+      modifiedAt: new Date().toISOString(),
+      isLive: true, // 실시간 기록임을 표시
+    })
+    liveLogId.value = newLogId
+    liveTagId.value = tagId
+  }
+
+  const startRest = () => {
+    if (!isTracking.value || isResting.value) return
+    isResting.value = true
+    restStartTime.value = new Date()
+  }
+
+  const endRest = () => {
+    if (!isTracking.value || !isResting.value) return
+    isResting.value = false
+    if (restStartTime.value) {
+      const restDuration = (new Date().getTime() - restStartTime.value.getTime()) / (1000 * 60)
+      accumulatedRestMinutes.value += restDuration
+      restStartTime.value = null
+    }
+  }
+
+  const endTracking = () => {
+    if (!isTracking.value) return
+
+    // 휴식 중이었다면 휴식 종료 처리
+    if (isResting.value) {
+      endRest()
+    }
+
+    const endTime = new Date()
+    const today = endTime.toISOString().slice(0, 10)
+
+    // 실시간 기록 중인 로그를 찾아서 업데이트
+    const liveLogIndex = attendanceLogs.value[today]?.findIndex(log => log.isLive)
+
+    if (liveLogIndex > -1) {
+      const liveLog = attendanceLogs.value[today][liveLogIndex]
+      liveLog.end = endTime.toTimeString().slice(0, 5)
+      liveLog.restMinutes = Math.round(accumulatedRestMinutes.value)
+      liveLog.isLive = false
+
+      // 근무 시간 및 일급 재계산
+      const tagStore = useTagStore()
+      const { totalWage, totalHours } = tagStore.calculateWage(
+        liveLog.date,
+        liveLog.start,
+        liveLog.end,
+        liveLog.tagId,
+        liveLog.restMinutes,
+      )
+      liveLog.workedHours = totalHours
+      liveLog.dailyWage = totalWage
+      liveLog.modifiedAt = new Date().toISOString()
+    }
+
+    isTracking.value = false
+    trackingStartTime.value = null
+    isResting.value = false
+    restStartTime.value = null
+    accumulatedRestMinutes.value = 0
+    liveLogId.value = null
+    liveTagId.value = null
   }
 
   const deleteLog = (logId, date) => {
@@ -184,5 +320,18 @@ export const useLogStore = defineStore('log', () => {
     allLogsSorted,
     normalizeLogData,
     // saveDataToServer,
+
+    // ✨ 실시간 근무 기록 관련 내보내기
+    isTracking,
+    trackingStartTime,
+    isResting,
+    restStartTime,
+    accumulatedRestMinutes,
+    liveLogId,
+    liveTagId,
+    startTracking,
+    startRest,
+    endRest,
+    endTracking,
   }
 })

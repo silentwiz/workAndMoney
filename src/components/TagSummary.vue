@@ -14,7 +14,8 @@ import { formatCurrency } from '@/utils/formatters'
         <span class="col-tag">職場</span>
         <span class="col-period">対象期間</span>
         <span class="col-payday">給料日</span>
-        <span class="col-wage">予想給料</span>
+        <span class="col-income">予想給料</span>
+        <span class="col-expense">予想支出</span>
       </div>
       <div v-for="item in tagStore.tagSummaries" :key="item.tagName" class="result-row">
         <span class="col-tag" data-label="職場">
@@ -23,7 +24,8 @@ import { formatCurrency } from '@/utils/formatters'
         </span>
         <span class="col-period" data-label="対象期間">{{ item.period }}</span>
         <span class="col-payday" data-label="給料日">毎月 {{ item.payday }}日</span>
-        <span class="col-wage" data-label="予想収入">{{ formatCurrency(item.wageForLog) }}</span>
+        <span class="col-income" data-label="予想給料">{{ formatCurrency(item.expectedIncome) }}</span>
+        <span class="col-expense" data-label="予想支出">{{ formatCurrency(item.expectedExpense) }}</span>
       </div>
     </div>
     <div v-else class="no-data-message">
@@ -81,7 +83,7 @@ button {
   background-color: #f0f0f0;
 }
 .col-tag {
-  flex: 1.5;
+  flex: 1.2;
   display: flex;
   align-items: center;
   font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
@@ -96,13 +98,20 @@ button {
   text-align: center;
   font-size: 0.9em; /* ✨ 수정: 폰트 크기 조정 */
 }
-.col-wage {
-  flex: 1.5;
+.col-income {
+  flex: 1.2;
   text-align: right;
   font-weight: bold;
   font-size: 1em; /* ✨ 수정: 폰트 크기 조정 */
 }
-.result-row.header .col-wage {
+.col-expense {
+  flex: 1.2;
+  text-align: right;
+  font-weight: bold;
+  font-size: 1em; /* ✨ 수정: 폰트 크기 조정 */
+}
+.result-row.header .col-income,
+.result-row.header .col-expense {
   text-align: right;
 }
 .tag-indicator {
@@ -125,25 +134,25 @@ button {
   .result-row {
     flex-direction: column;
     align-items: flex-start;
-    padding: 8px; /* ✨ 수정: 패딩 줄임 */
+    padding: 8px;
     border: 1px solid #eee;
-    margin-bottom: 8px; /* ✨ 수정: 마진 줄임 */
+    margin-bottom: 8px;
     border-radius: 6px;
   }
   .result-row > span {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    padding: 3px 0; /* ✨ 수정: 패딩 줄임 */
-    font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
+    padding: 3px 0;
+    font-size: 0.9em;
     text-align: right;
   }
   .result-row > span::before {
     content: attr(data-label);
     font-weight: bold;
     text-align: left;
-    margin-right: 8px; /* ✨ 수정: 마진 줄임 */
-    font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
+    margin-right: 8px;
+    font-size: 0.9em;
   }
   .col-tag::before {
     content: '職場';
@@ -154,8 +163,14 @@ button {
   .col-payday::before {
     content: '給料日';
   }
-  .col-wage::before {
-    content: '予想収入';
+  .col-income::before {
+    content: '予想給料';
+  }
+  .col-expense::before {
+    content: '予想支出';
+  }
+  .col-expense::before {
+    content: '予想支出';
   }
 }
 </style>

@@ -1,27 +1,134 @@
 <script setup>
-import { ref } from 'vue' // ref를 import 합니다.
+import { ref, onUnmounted, onMounted } from 'vue'
 import SummaryDashboard from '@/components/SummaryDashboard.vue'
 import AttendanceCalendar from '@/components/AttendanceCalendar.vue'
 import LogList from '@/components/LogList.vue'
-import BaseModal from '@/components/BaseModal.vue' // 모달 컴포넌트 import
-import SettingsEditor from '@/components/SettingsEditor.vue' // 이름 바꾼 설정 에디터 import
+import BaseModal from '@/components/BaseModal.vue'
+import SettingsEditor from '@/components/SettingsEditor.vue'
 import TagSummary from '@/components/TagSummary.vue'
+import { useLogStore } from '@/stores/logStore'
+import { useTagStore } from '@/stores/tagStore'
 
-// 설정 모달의 열림/닫힘 상태를 관리합니다.
+const logStore = useLogStore()
+const tagStore = useTagStore()
+
 const isSettingsModalOpen = ref(false)
+const showLiveControls = ref(false) // ✨ 실시간 근무 기록 컨트롤 표시 여부
+
+// ✨ 실시간 근무 기록 관련 상태 및 함수
+const selectedLiveTagId = ref(null) // 실시간 기록할 태그 ID
+const liveStatusMessage = ref('待機中') // 현재 상태 메시지
+const liveWorkedTime = ref('00:00:00') // 실시간 근무 시간
+let timerInterval = null
+
+const updateLiveTime = () => {
+  if (logStore.trackingStartTime) {
+    const now = new Date()
+    let elapsedMilliseconds = now.getTime() - logStore.trackingStartTime.getTime()
+
+    if (logStore.restStartTime) {
+      elapsedMilliseconds -= now.getTime() - logStore.restStartTime.getTime()
+    }
+
+    const totalRestMs = logStore.accumulatedRestMinutes * 60 * 1000
+    elapsedMilliseconds -= totalRestMs
+
+    const hours = Math.floor(elapsedMilliseconds / (1000 * 60 * 60))
+    const minutes = Math.floor((elapsedMilliseconds % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((elapsedMilliseconds % (1000 * 60)) / 1000)
+
+    liveWorkedTime.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+}
+
+const startWork = () => {
+  if (!selectedLiveTagId.value) {
+    alert('職場を選択してください。')
+    return
+  }
+  logStore.startTracking(selectedLiveTagId.value)
+  liveStatusMessage.value = '勤務中'
+  timerInterval = setInterval(updateLiveTime, 1000)
+}
+
+const startRest = () => {
+  logStore.startRest()
+  liveStatusMessage.value = '休憩中'
+}
+
+const endRest = () => {
+  logStore.endRest()
+  liveStatusMessage.value = '勤務中'
+}
+
+const endWork = () => {
+  logStore.endTracking()
+  liveStatusMessage.value = '待機中'
+  clearInterval(timerInterval)
+  liveWorkedTime.value = '00:00:00'
+  selectedLiveTagId.value = null
+}
+
+onUnmounted(() => {
+  clearInterval(timerInterval)
+})
+
+onMounted(() => {
+  if (logStore.isTracking) {
+    selectedLiveTagId.value = logStore.liveTagId
+    liveStatusMessage.value = '勤務中'
+    timerInterval = setInterval(updateLiveTime, 1000)
+  }
+  if (logStore.isResting) {
+    liveStatusMessage.value = '休憩中'
+  }
+})
 </script>
 
 <template>
-  <main>
-    <div class="main-header">
-      <h1>勤怠管理</h1>
-      <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
+  <main class="home-layout">
+    <div class="main-content">
+      <div class="main-header">
+        <h1>勤怠管理</h1>
+        <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
+      </div>
+      <AttendanceCalendar />
+      <SummaryDashboard />
+      <TagSummary />
+      <!-- ✨ 실시간 근무 기록 컨트롤 -->
+      <div class="live-tracking-controls">
+        <div class="status-display" @click="showLiveControls = !showLiveControls">
+          <span class="status-label">状態:</span>
+          <span class="current-status">{{ liveStatusMessage }}</span>
+          <span class="worked-time">{{ liveWorkedTime }}</span>
+          <span class="toggle-icon">{{ showLiveControls ? '▲' : '▼' }}</span>
+        </div>
+        <div class="control-buttons" v-show="showLiveControls">
+          <select v-model="selectedLiveTagId" :disabled="logStore.isTracking">
+            <option :value="null" disabled>職場選択</option>
+            <option v-for="tag in tagStore.tags" :key="tag.id" :value="tag.id">
+              {{ tag.name }}
+            </option>
+          </select>
+          <button
+            @click="logStore.isTracking ? endWork() : startWork()"
+            :disabled="logStore.isResting || (!logStore.isTracking && !selectedLiveTagId)"
+            :class="{ 'start-btn': !logStore.isTracking, 'end-btn': logStore.isTracking }"
+          >
+            {{ logStore.isTracking ? '勤務終了' : '勤務開始' }}
+          </button>
+          <button
+            @click="logStore.isResting ? endRest() : startRest()"
+            :disabled="!logStore.isTracking"
+            :class="{ 'rest-btn': true }"
+          >
+            {{ logStore.isResting ? '休憩終了' : '休憩開始' }}
+          </button>
+        </div>
+      </div>
+      <LogList />
     </div>
 
-    <SummaryDashboard />
-    <TagSummary />
-    <AttendanceCalendar />
-    <LogList />
     <BaseModal :show="isSettingsModalOpen" @close="isSettingsModalOpen = false">
       <SettingsEditor />
     </BaseModal>
@@ -29,12 +136,21 @@ const isSettingsModalOpen = ref(false)
 </template>
 
 <style scoped>
-main {
+.home-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: 20px;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 }
-/* 새로운 스타일 추가 */
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .main-header {
   display: flex;
   justify-content: center;
@@ -42,9 +158,11 @@ main {
   position: relative;
   margin-bottom: 20px;
 }
+
 h1 {
   margin: 0;
 }
+
 .settings-button {
   position: absolute;
   right: 0;
@@ -54,5 +172,118 @@ h1 {
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
+}
+
+/* ✨ 실시간 근무 기록 컨트롤 스타일 */
+.live-tracking-controls {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.status-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer; /* 토글 가능하도록 커서 변경 */
+}
+
+.toggle-icon {
+  margin-left: auto; /* 아이콘을 오른쪽으로 정렬 */
+  font-size: 0.8em;
+}
+
+.current-status {
+  color: #42b883;
+}
+
+.worked-time {
+  background-color: #eee;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-family: 'monospace';
+}
+
+.control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.control-buttons select {
+  flex-grow: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.control-buttons button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+
+.control-buttons button.start-btn {
+  background-color: #42b883;
+}
+
+.control-buttons button.rest-btn {
+  background-color: #ffc107; /* 경고색 */
+}
+
+.control-buttons button.end-btn {
+  background-color: #e53935; /* 에러색 */
+}
+
+.control-buttons button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 데스크탑 레이아웃 */
+@media (min-width: 768px) {
+  .home-layout {
+    flex-direction: column; /* 데스크탑에서도 컬럼 방향 유지 */
+    align-items: center; /* 중앙 정렬 */
+  }
+
+  .main-content {
+    width: 100%; /* 메인 콘텐츠가 전체 너비 차지 */
+    max-width: 1000px; /* 최대 너비 설정 */
+  }
+
+  /* 데스크탑에서는 컨트롤 버튼 항상 표시 */
+  .control-buttons {
+    display: flex !important; /* v-show를 오버라이드 */
+  }
+
+  .status-display {
+    cursor: default; /* 데스크탑에서는 클릭 비활성화 */
+  }
+
+  .toggle-icon {
+    display: none; /* 데스크탑에서는 토글 아이콘 숨김 */
+  }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 767px) {
+  .control-buttons {
+    flex-direction: column;
+  }
+  .control-buttons select,
+  .control-buttons button {
+    width: 100%;
+  }
 }
 </style>

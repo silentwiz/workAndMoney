@@ -49,7 +49,10 @@ const handleImport = () => {
         </span>
         <span class="col-date">{{ log.date }}</span>
         <span class="col-tag">
-          <span class="tag-badge" :style="{ backgroundColor: tagStore.getTagById(log.tagId)?.color }">
+          <span
+            class="tag-badge"
+            :style="{ backgroundColor: tagStore.getTagById(log.tagId)?.color }"
+          >
             {{ tagStore.getTagById(log.tagId)?.name || 'N/A' }}
           </span>
         </span>
@@ -68,7 +71,10 @@ const handleImport = () => {
 
     <div class="pagination-controls" v-if="logStore.totalPages > 1">
       <button @click="logStore.goToPage(1)" :disabled="logStore.currentPage === 1">&lt;&lt;</button>
-      <button @click="logStore.goToPage(logStore.currentPage - 1)" :disabled="logStore.currentPage === 1">
+      <button
+        @click="logStore.goToPage(logStore.currentPage - 1)"
+        :disabled="logStore.currentPage === 1"
+      >
         &lt;
       </button>
       <span> Page {{ logStore.currentPage }} of {{ logStore.totalPages }} </span>
@@ -204,7 +210,7 @@ h2 {
 } /* ✨ 수정: 폰트 크기 조정 */
 
 /* ✨ --- 스마트폰 (모바일) 반응형 스타일 --- ✨ */
-/* 화면 너비가 768px 이하일 때 적용됩니다. */
+/* 화면 너비가 1023px 이하일 때 적용됩니다. */
 @media (max-width: 768px) {
   /* PC용 제목 행을 숨깁니다. */
   .log-row.header {
@@ -244,10 +250,10 @@ h2 {
     font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
   }
   .col-time {
-    font-size: 0.9em; /* ✨ 수정: 폰트 크기 조정 */
+    font-size: 0.9em;
   }
   .col-wage {
-    font-size: 1.1em; /* ✨ 수정: 폰트 크기 조정 */
+    font-size: 1.1em;
   }
   .col-tag,
   .col-wage {
