@@ -30,12 +30,12 @@ const formatCurrency = (value) => {
         </span>
         <span class="col-period" data-label="対象期間">{{ item.period }}</span>
         <span class="col-payday" data-label="給料日">毎月 {{ item.payday }}日</span>
-        <span class="col-wage" data-label="予想収入">{{ formatCurrency(item.totalWage) }}</span>
+        <span class="col-wage" data-label="予想収入">{{ formatCurrency(item.wageForLog) }}</span>
       </div>
     </div>
     <div v-else class="no-data-message">
       <p>収入要約を表示するデータがありません。</p>
-      <p>まず、勤務記録と職場(タグ)設定を追加してください。</p>
+      <p>まず、勤務記録と職場設定を追加してください。</p>
     </div>
   </div>
 </template>

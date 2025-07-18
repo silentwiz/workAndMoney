@@ -32,7 +32,6 @@ const handleImport = () => {
   reader.readAsText(file)
 }
 </script>
-
 <template>
   <div class="log-list-container">
     <h2>記録</h2>
@@ -47,7 +46,7 @@ const handleImport = () => {
         <span class="col-wage">純収入</span>
       </div>
 
-      <div v-for="log in store.attendanceLogs" :key="log.id" class="log-row">
+      <div v-for="log in store.paginatedLogs" :key="log.id" class="log-row">
         <span class="col-modified">
           <span v-if="log.modifiedAt">{{ new Date(log.modifiedAt).toLocaleString('ja-JP') }}</span>
         </span>
@@ -57,9 +56,12 @@ const handleImport = () => {
             {{ store.getTagById(log.tagId)?.name || 'N/A' }}
           </span>
         </span>
-        <span class="col-time"
-          >{{ log.start }} ~ {{ log.end }} ({{ log.workedHours.toFixed(2) }}時間)</span
-        >
+        <span class="col-time">
+          {{ log.start }} ~ {{ log.end }}
+          <span v-if="typeof log.workedHours === 'number'"
+            >({{ log.workedHours.toFixed(2) }}時間)</span
+          >
+        </span>
         <span class="col-expense">{{ formatCurrency(log.expenses || 0) }}</span>
         <span class="col-wage">
           <strong>{{ formatCurrency(log.dailyWage - (log.expenses || 0)) }}</strong>
@@ -67,8 +69,29 @@ const handleImport = () => {
       </div>
     </div>
 
-    <p v-if="store.attendanceLogs.length === 0" class="no-logs">まだ記録がありません。</p>
+    <div class="pagination-controls" v-if="store.totalPages > 1">
+      <button @click="store.goToPage(1)" :disabled="store.currentPage === 1">&lt;&lt;</button>
+      <button @click="store.goToPage(store.currentPage - 1)" :disabled="store.currentPage === 1">
+        &lt;
+      </button>
+      <span> Page {{ store.currentPage }} of {{ store.totalPages }} </span>
+      <button
+        @click="store.goToPage(store.currentPage + 1)"
+        :disabled="store.currentPage === store.totalPages"
+      >
+        &gt;
+      </button>
+      <button
+        @click="store.goToPage(store.totalPages)"
+        :disabled="store.currentPage === store.totalPages"
+      >
+        &gt;&gt;
+      </button>
+    </div>
+
+    <p v-if="store.allLogsSorted.length === 0" class="no-logs">まだ記録がありません。</p>
   </div>
+
   <div class="section">
     <h3>💾データ管理</h3>
     <div class="input-group">
@@ -86,6 +109,27 @@ const handleImport = () => {
 
 <style scoped>
 /* PC (기본) 스타일 */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pagination-controls button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+}
+.pagination-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.pagination-controls span {
+  font-size: 14px;
+  color: #333;
+}
 .log-list-container {
   padding: 20px;
 }

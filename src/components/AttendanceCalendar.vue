@@ -27,7 +27,7 @@ const calendarLocale = computed(() => ({
 }))
 
 const attributes = computed(() => {
-  const logAttributes = store.attendanceLogs.map((log) => {
+  const logAttributes = store.allLogsSorted.map((log) => {
     const tag = store.getTagById(log.tagId)
     const [year, month, day] = log.date.split('-').map(Number)
 
@@ -91,14 +91,6 @@ const attributes = computed(() => {
 })
 const calendarViewDate = computed(() => store.viewedDate)
 
-const onDeleteLog = (logId) => {
-  if (confirm('この記録を削除しますか？')) {
-    store.deleteLog(logId)
-    // 목록이 변경되었으므로 모달을 닫음
-    isModalOpen.value = false
-  }
-}
-
 // 1. 달력이 바뀌면 스토어의 setViewedDate 액션을 직접 호출합니다.
 const handlePageUpdate = (pages) => {
   if (pages && pages.length > 0) {
@@ -146,6 +138,22 @@ const onEditLog = (log) => {
   editingLog.value = log // 수정할 로그 데이터 전달
   modalMode.value = 'editor'
 }
+const isDeleteConfirmOpen = ref(false)
+const logToDelete = ref(null)
+
+const requestDeleteLog = (log) => {
+  logToDelete.value = log // ✨ log 객체를 그대로 저장
+  isDeleteConfirmOpen.value = true
+}
+const confirmDelete = () => {
+  // ✨ 수정 3: 저장된 log 객체에서 id와 date를 추출하여 올바르게 전달
+  if (logToDelete.value) {
+    store.deleteLog(logToDelete.value.id, logToDelete.value.date)
+  }
+
+  isDeleteConfirmOpen.value = false
+  isModalOpen.value = false // 원래 모달도 닫기
+}
 </script>
 <template>
   <div class="calendar-container">
@@ -176,11 +184,11 @@ const onEditLog = (log) => {
 
     <BaseModal :show="isModalOpen" @close="isModalOpen = false">
       <DailyLogViewer
+        @request-delete-log="requestDeleteLog"
         v-if="modalMode === 'viewer'"
         :logs="dailyLogs"
         @add-new="onAddNew"
         @edit-log="onEditLog"
-        @delete-log="onDeleteLog"
       />
       <LogEditor
         v-if="modalMode === 'editor'"
@@ -188,6 +196,17 @@ const onEditLog = (log) => {
         :log-data="editingLog"
         @close="isModalOpen = false"
       />
+    </BaseModal>
+
+    <BaseModal :show="isDeleteConfirmOpen" @close="isDeleteConfirmOpen = false">
+      <div class="confirm-dialog">
+        <h4>記録を削除</h4>
+        <p>この記録を本当に削除しますか？<br />この操作は元に戻せません。</p>
+        <div class="confirm-buttons">
+          <button class="cancel-btn" @click="isDeleteConfirmOpen = false">キャンセル</button>
+          <button class="delete-btn" @click="confirmDelete">削除</button>
+        </div>
+      </div>
     </BaseModal>
   </div>
 </template>

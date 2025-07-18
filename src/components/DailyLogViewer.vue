@@ -2,7 +2,7 @@
 defineProps({
   logs: { type: Array, required: true }, // 해당 날짜의 근무 기록 배열
 })
-const emit = defineEmits(['edit-log', 'add-new', 'delete-log']) // 수정 또는 추가 이벤트를 부모에게 알림
+const emit = defineEmits(['edit-log', 'add-new', 'request-delete-log']) // 수정 또는 추가 이벤트를 부모에게 알림
 </script>
 
 <template>
@@ -13,7 +13,7 @@ const emit = defineEmits(['edit-log', 'add-new', 'delete-log']) // 수정 또는
         <span>{{ log.start }} - {{ log.end }}</span>
         <div class="buttons">
           <button @click="emit('edit-log', log)">修正</button>
-          <button class="delete-btn" @click="emit('delete-log', log.id)">削除</button>
+          <button class="delete-btn" @click="emit('request-delete-log', log)">削除</button>
         </div>
       </li>
     </ul>
