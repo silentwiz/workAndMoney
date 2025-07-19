@@ -23,10 +23,10 @@ export const useHolidayService = () => {
   const isHoliday = (date) => {
     if (!holidays.value) {
       console.warn('공휴일 데이터가 아직 로드되지 않았습니다.');
-      return false;
+      return null; // 공휴일 데이터가 없으면 null 반환
     }
-    const dateString = date.toISOString().slice(0, 10);
-    return !!holidays.value[dateString];
+    const dateString = typeof date === 'string' ? date : date.toISOString().slice(0, 10);
+    return holidays.value[dateString] || null; // 공휴일 이름 반환, 없으면 null
   };
 
   // 앱 시작 시 공휴일 데이터 미리 로드

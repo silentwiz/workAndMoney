@@ -7,6 +7,7 @@ const props = defineProps({
   date: { type: Date, required: true },
   // 수정할 로그 데이터를 optional prop으로 받음
   logData: { type: Object, default: null },
+  holidayName: { type: String, default: null }, // 이 부분 추가
 })
 const emit = defineEmits(['close'])
 const logStore = useLogStore()
@@ -75,7 +76,7 @@ const handleSubmit = () => {
 
 <template>
   <div>
-    <h3>{{ formattedDate }}の出勤記録</h3>
+    <h3>{{ formattedDate }}の出勤記録 <span v-if="holidayName">({{ holidayName }})</span></h3>
     <div class="log-editor-form">
       <select v-model="selectedTagId">
         <option :value="null" disabled>職場選択</option>

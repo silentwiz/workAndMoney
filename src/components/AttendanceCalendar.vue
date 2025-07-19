@@ -27,6 +27,16 @@ const weekStartDay = ref(2) // 1: 일요일, 2: 월요일
 // ✨ 설정 컨트롤 표시 여부 상태 추가
 const showCalendarSettings = ref(false)
 
+const currentHoliday = computed(() => {
+  if (!selectedDate.value) return null;
+  const date = selectedDate.value;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(date.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${dayOfMonth}`;
+  return isHoliday(dateStr) || null;
+});
+
 
 
 const calendarLocale = computed(() => ({
@@ -93,7 +103,6 @@ const attributes = computed(() => {
     key: `holiday-${date}`,
     highlight: { color: 'red', fillMode: 'light' },
     dates: new Date(date),
-    popover: { label: name },
     order: 1,
   })) : [];
 
@@ -221,19 +230,23 @@ const confirmDelete = () => {
     />
 
     <BaseModal :show="isModalOpen" @close="isModalOpen = false">
+      <div v-if="selectedDate">
       <DailyLogViewer
         @request-delete-log="requestDeleteLog"
         v-if="modalMode === 'viewer'"
         :logs="dailyLogs"
         @add-new="onAddNew"
         @edit-log="onEditLog"
+        :date="selectedDate"
       />
       <LogEditor
         v-if="modalMode === 'editor'"
         :date="selectedDate"
         :log-data="editingLog"
         @close="isModalOpen = false"
+        :holiday-name="currentHoliday"
       />
+      </div>
     </BaseModal>
 
     <BaseModal :show="isDeleteConfirmOpen" @close="isDeleteConfirmOpen = false">

@@ -14,7 +14,9 @@ import router from './router'
 
 const app = createApp(App)
 
-const pinia = createPinia()
+const pinia = createPinia({
+  devtools: false // Pinia devtools 비활성화
+})
 app.use(pinia)
 app.use(router)
 // 앱에 V-Calendar를 등록합니다.

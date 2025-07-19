@@ -1,13 +1,29 @@
 <script setup>
-defineProps({
-  logs: { type: Array, required: true }, // 해당 날짜의 근무 기록 배열
-})
+import { computed } from 'vue'
+import { useHolidayService } from '@/services/holidayService'
+
+const { isHoliday } = useHolidayService()
+
 const emit = defineEmits(['edit-log', 'add-new', 'request-delete-log']) // 수정 또는 추가 이벤트를 부모에게 알림
+
+const props = defineProps({
+  logs: { type: Array, required: true }, // 해당 날짜의 근무 기록 배열
+  date: { type: Date, required: true }, // 선택된 날짜
+})
+const holidayName = computed(() => {
+  const date = props.date
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const dayOfMonth = String(date.getDate()).padStart(2, '0')
+  const dateStr = `${year}-${month}-${dayOfMonth}`
+  return isHoliday(dateStr) || null
+})
 </script>
 
 <template>
   <div class="viewer-container">
     <h3>記録</h3>
+    <p>{{ date.toLocaleDateString('ja-JP') }} <span v-if="holidayName">({{ holidayName }})</span></p>
     <ul class="log-list">
       <li v-for="log in logs" :key="log.id">
         <span>{{ log.start }} - {{ log.end }}</span>
