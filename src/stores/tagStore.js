@@ -1,9 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useLogStore } from './logStore'
+import { useHolidayService } from '../services/holidayService'
 
 export const useTagStore = defineStore('tag', () => {
   const tags = ref([])
+  const { isHoliday, fetchHolidays } = useHolidayService()
+  fetchHolidays();
 
   const addTag = (tagData) => {
     const newTag = {
@@ -42,7 +45,7 @@ export const useTagStore = defineStore('tag', () => {
 
   const getTagById = computed(() => (tagId) => tags.value.find((t) => t.id === tagId))
 
-  const calculateWage = (dateStr, start, end, tagId, restMinutes = 0) => {
+  const calculateWage = async (dateStr, start, end, tagId, restMinutes = 0) => {
     const tag = tags.value.find((t) => t.id === tagId);
     if (!tag) return { totalWage: 0, totalHours: 0 };
 
@@ -51,7 +54,6 @@ export const useTagStore = defineStore('tag', () => {
     let startDate = new Date(`${dateStr}T${start}`);
     let endDate = new Date(`${dateStr}T${end}`);
 
-    // 다음 날로 넘어가는 경우 처리
     if (endDate < startDate) {
       endDate.setDate(endDate.getDate() + 1);
     }
@@ -60,15 +62,16 @@ export const useTagStore = defineStore('tag', () => {
       const dayOfWeek = currentDate.getDay();
       const hour = currentDate.getHours();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 일요일, 6: 토요일
+      const isHolidayDay = isHoliday(currentDate);
+      const isSpecialDay = isWeekend || isHolidayDay;
 
-      // 야간 시간 계산 로직 개선: nightStartHour가 nightEndHour보다 크면 자정을 넘어가는 야간
       const isNight = tag.nightStartHour < tag.nightEndHour
         ? (hour >= tag.nightStartHour && hour < tag.nightEndHour)
         : (hour >= tag.nightStartHour || hour < tag.nightEndHour);
 
-      if (isWeekend && isNight) {
+      if (isSpecialDay && isNight) {
         return tag.weekendNightRate;
-      } else if (isWeekend) {
+      } else if (isSpecialDay) {
         return tag.weekendRate;
       } else if (isNight) {
         return tag.nightRate;
@@ -77,17 +80,15 @@ export const useTagStore = defineStore('tag', () => {
       }
     };
 
-    // 시간 이벤트 포인트 생성 (요율이 변하는 지점)
     const eventPoints = new Set();
     eventPoints.add(startDate.getTime());
     eventPoints.add(endDate.getTime());
 
-    // 야간 시작/종료 시간 추가
     let tempDate = new Date(startDate);
     while (tempDate < endDate) {
       const nextDay = new Date(tempDate);
       nextDay.setDate(nextDay.getDate() + 1);
-      nextDay.setHours(0, 0, 0, 0); // 다음 날 0시
+      nextDay.setHours(0, 0, 0, 0);
 
       const nightStartToday = new Date(tempDate);
       nightStartToday.setHours(tag.nightStartHour, 0, 0, 0);
@@ -101,7 +102,6 @@ export const useTagStore = defineStore('tag', () => {
         eventPoints.add(nightEndToday.getTime());
       }
 
-      // 다음 날의 야간 시작/종료 시간도 고려 (자정을 넘어가는 경우)
       const nightStartNextDay = new Date(tempDate);
       nightStartNextDay.setDate(nightStartNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1));
       nightStartNextDay.setHours(tag.nightStartHour, 0, 0, 0);
@@ -116,7 +116,6 @@ export const useTagStore = defineStore('tag', () => {
         eventPoints.add(nightEndNextDay.getTime());
       }
 
-      // 자정 (날짜 변경)
       const midnight = new Date(tempDate);
       midnight.setDate(midnight.getDate() + 1);
       midnight.setHours(0, 0, 0, 0);
@@ -124,7 +123,7 @@ export const useTagStore = defineStore('tag', () => {
         eventPoints.add(midnight.getTime());
       }
 
-      tempDate = nextDay; // 다음 날로 이동
+      tempDate = nextDay;
     }
 
     const sortedEventPoints = Array.from(eventPoints).sort((a, b) => a - b);
@@ -133,12 +132,10 @@ export const useTagStore = defineStore('tag', () => {
       const segmentStart = new Date(sortedEventPoints[i]);
       const segmentEnd = new Date(sortedEventPoints[i + 1]);
 
-      // 현재 구간이 실제 근무 시간 범위 내에 있는지 확인
       if (segmentStart >= endDate || segmentEnd <= startDate) {
         continue;
       }
 
-      // 구간의 중간 지점의 요율을 사용 (구간 내내 요율이 동일하다고 가정)
       const midPoint = new Date((segmentStart.getTime() + segmentEnd.getTime()) / 2);
       const applicableRate = getRate(midPoint);
 

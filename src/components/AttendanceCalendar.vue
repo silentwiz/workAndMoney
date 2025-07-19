@@ -3,6 +3,7 @@ import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useLogStore } from '@/stores/logStore'
 import { useTagStore } from '@/stores/tagStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useHolidayService } from '@/services/holidayService'
 import BaseModal from './BaseModal.vue'
 import LogEditor from './LogEditor.vue'
 import DailyLogViewer from './DailyLogViewer.vue'
@@ -10,6 +11,7 @@ import DailyLogViewer from './DailyLogViewer.vue'
 const logStore = useLogStore()
 const tagStore = useTagStore()
 const settingsStore = useSettingsStore()
+const { holidays, isHoliday } = useHolidayService()
 
 const isModalOpen = ref(false)
 const selectedDate = ref(null)
@@ -87,6 +89,28 @@ const attributes = computed(() => {
     })
   }
 
+  const holidayAttributes = holidays.value ? Object.entries(holidays.value).map(([date, name]) => ({
+    key: `holiday-${date}`,
+    highlight: { color: 'red', fillMode: 'light' },
+    dates: new Date(date),
+    popover: { label: name },
+    order: 1,
+  })) : [];
+
+  const saturdayAttributes = {
+    key: 'saturdays',
+    highlight: { color: 'blue', fillMode: 'light' },
+    dates: { repeat: { weekdays: 7 } }, // 토요일
+    order: 0,
+  };
+
+  const sundayAttributes = {
+    key: 'sundays',
+    highlight: { color: 'red', fillMode: 'light' },
+    dates: { repeat: { weekdays: 1 } }, // 일요일
+    order: 0,
+  };
+
   return [
     {
       key: 'today',
@@ -96,6 +120,9 @@ const attributes = computed(() => {
     },
     ...logAttributes,
     ...paydayAttributes,
+    ...holidayAttributes,
+    saturdayAttributes,
+    sundayAttributes,
   ]
 })
 const calendarViewDate = computed(() => settingsStore.viewedDate)

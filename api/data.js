@@ -1,19 +1,12 @@
 import { put, list } from '@vercel/blob'
 
-// 요청 본문을 읽어오기 위한 헬퍼 함수
-function getBody(request) {
-  return new Promise((resolve, reject) => {
-    let body = ''
-    request.on('data', (chunk) => {
-      body += chunk.toString()
-    })
-    request.on('end', () => {
-      resolve(body)
-    })
-    request.on('error', (err) => {
-      reject(err)
-    })
-  })
+// 요청 본문을 비동기적으로 읽어오는 더 안정적인 함수
+async function getBody(request) {
+  const chunks = []
+  for await (const chunk of request) {
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks).toString()
 }
 
 export default async function handler(request, response) {
@@ -27,21 +20,35 @@ export default async function handler(request, response) {
 
   if (request.method === 'POST') {
     try {
-      const bodyString = await getBody(request)
+      const bodyString = request.body ? JSON.stringify(request.body) : await getBody(request);
 
-      const blobResult = await put(filename, bodyString, {
+      // 본문이 비어있는 경우 에러 처리
+      if (!bodyString) {
+        console.error('--- SAVE ERROR ---', 'Request body is empty.')
+        return response.status(400).json({
+          message: 'Request body is empty.',
+        })
+      }
+
+      await put(filename, bodyString, {
         access: 'public',
         contentType: 'application/json',
         allowOverwrite: true,
       })
 
-      return response.status(200).json(blobResult)
+      // ✨ 최종 해결책: 응답 헤더에 Content-Type을 명시적으로 설정합니다.
+      response.setHeader('Content-Type', 'application/json')
+      return response.status(200).json({ success: true, message: 'Data saved successfully.' })
     } catch (error) {
-      // ✨ 서버에서 발생한 실제 에러 메시지를 응답에 포함시킵니다.
-      console.error('--- SAVE ERROR ---', error)
+      // ✨ 아이폰 문제 디버깅을 위한 상세 로깅
+      console.error('--- DETAILED SAVE ERROR ---')
+      console.error('Timestamp:', new Date().toISOString())
+      console.error('User:', user)
+      console.error('Request Headers:', JSON.stringify(request.headers, null, 2))
+      console.error('Error Object:', error)
+      
       return response.status(500).json({
-        message: 'Failed to save data due to an internal error.',
-        // 에러의 상세 내용을 클라이언트에서도 볼 수 있도록 전달
+        message: 'Failed to save data due to an internal server error.',
         errorDetails: error.message,
       })
     }
@@ -51,7 +58,8 @@ export default async function handler(request, response) {
       const { blobs } = await list({ prefix: filename, limit: 1 })
 
       if (blobs.length === 0) {
-        return response.status(200).json({ logs: [], tags: [] })
+        // 데이터가 없을 때 빈 구조를 반환
+        return response.status(200).json({ logs: {}, tags: [] })
       }
 
       const fileUrl = blobs[0].url

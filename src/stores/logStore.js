@@ -137,7 +137,7 @@ export const useLogStore = defineStore('log', () => {
 
       // 근무 시간 및 일급 재계산
       const tagStore = useTagStore()
-      const { totalWage, totalHours } = tagStore.calculateWage(
+      const { totalWage, totalHours } = await tagStore.calculateWage(
         liveLog.date,
         liveLog.start,
         liveLog.end,
@@ -170,9 +170,9 @@ export const useLogStore = defineStore('log', () => {
     }
   }
 
-  const saveLog = (logData) => {
+  const saveLog = async (logData) => {
     const tagStore = useTagStore()
-    const { totalWage, totalHours } = tagStore.calculateWage(
+    const { totalWage, totalHours } = await tagStore.calculateWage(
       logData.date,
       logData.start,
       logData.end,
@@ -214,6 +214,7 @@ export const useLogStore = defineStore('log', () => {
       }
       targetDateLogs.push(newLogData)
     }
+    await saveDataToServer()
   }
 
   const paginatedLogs = computed(() => {

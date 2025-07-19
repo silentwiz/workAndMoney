@@ -3,13 +3,40 @@ import { ref } from 'vue'
 import { useLogStore } from '@/stores/logStore'
 import { useTagStore } from '@/stores/tagStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useHolidayService } from '@/services/holidayService'
+
 const logStore = useLogStore()
 const tagStore = useTagStore()
 const settingsStore = useSettingsStore()
+const { isHoliday } = useHolidayService()
 
 const fileInput = ref(null)
 
 import { formatCurrency } from '@/utils/formatters'
+
+const getRateDescription = (log) => {
+  const tag = tagStore.getTagById(log.tagId)
+  if (!tag) return ''
+
+  const date = new Date(log.date)
+  const dayOfWeek = date.getDay()
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+  const isHolidayDay = isHoliday(date)
+  const isSpecialDay = isWeekend || isHolidayDay
+
+  // 근무 시간의 대부분이 야간인지 주간인지 판단 (단순화)
+  const startHour = parseInt(log.start.split(':')[0])
+  const isNight =
+    tag.nightStartHour < tag.nightEndHour
+      ? startHour >= tag.nightStartHour && startHour < tag.nightEndHour
+      : startHour >= tag.nightStartHour || startHour < tag.nightEndHour
+
+  if (isSpecialDay) {
+    return isNight ? '週末・祝日夜間' : '週末・祝日昼間'
+  } else {
+    return isNight ? '平日夜間' : '平日昼間'
+  }
+}
 
 // 데이터 내보내기/가져오기 핸들러
 const handleExport = () => {
@@ -39,6 +66,7 @@ const handleImport = () => {
         <span class="col-date">勤務日</span>
         <span class="col-tag">職場</span>
         <span class="col-time">勤務時間</span>
+        <span class="col-rate">時給</span>
         <span class="col-expense">支出</span>
         <span class="col-wage">純収入</span>
       </div>
@@ -62,6 +90,7 @@ const handleImport = () => {
             >({{ log.workedHours.toFixed(2) }}時間)</span
           >
         </span>
+        <span class="col-rate">{{ getRateDescription(log) }}</span>
         <span class="col-expense">{{ formatCurrency(log.expenses || 0) }}</span>
         <span class="col-wage">
           <strong>{{ formatCurrency(log.dailyWage - (log.expenses || 0)) }}</strong>
@@ -178,6 +207,11 @@ h2 {
   font-size: 0.8em;
   text-align: center;
 }
+.col-rate {
+  flex: 1;
+  text-align: center;
+  font-size: 0.8em;
+}
 .col-wage {
   flex: 1.2;
   text-align: right;
@@ -250,6 +284,9 @@ h2 {
     font-size: 0.9em; /* ✨ 추가: 폰트 크기 조정 */
   }
   .col-time {
+    font-size: 0.9em;
+  }
+  .col-rate {
     font-size: 0.9em;
   }
   .col-wage {

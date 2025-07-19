@@ -31,7 +31,6 @@ const handleUpdateTag = () => {
   }
 }
 
-
 // 새 태그 추가 로직 (기본값 설정)
 const newTag = ref({
   name: '',
@@ -79,10 +78,12 @@ const handleAddTag = () => {
 
         <div class="setting-group">
           <h5>時給設定</h5>
-          <label>基本: <input type="number" v-model="editingTag.baseRate" /> 円</label>
-          <label>夜間: <input type="number" v-model="editingTag.nightRate" /> 円</label>
-          <label>週末: <input type="number" v-model="editingTag.weekendRate" /> 円</label>
-          <label>週末夜間: <input type="number" v-model="editingTag.weekendNightRate" /> 円</label>
+          <label>平日昼間: <input type="number" v-model="editingTag.baseRate" /> 円</label>
+          <label>平日夜間: <input type="number" v-model="editingTag.nightRate" /> 円</label>
+          <label>週末・祝日昼間: <input type="number" v-model="editingTag.weekendRate" /> 円</label>
+          <label
+            >週末・祝日夜間: <input type="number" v-model="editingTag.weekendNightRate" /> 円</label
+          >
         </div>
 
         <div class="setting-group">
@@ -96,7 +97,8 @@ const handleAddTag = () => {
         </div>
 
         <button @click="handleUpdateTag" class="save-button">保存</button>
-        <p v-if="saveMessage" class="save-message">{{ saveMessage }}</p> <!-- ✨ 메시지 표시 요소 추가 -->
+        <p v-if="saveMessage" class="save-message">{{ saveMessage }}</p>
+        <!-- ✨ 메시지 표시 요소 추가 -->
       </div>
     </BaseModal>
   </div>
