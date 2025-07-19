@@ -24,12 +24,12 @@ export const saveData = async (username, dataToSave) => {
   }
 
   try {
-    // 성공 응답을 JSON으로 파싱
-    return await response.json()
+    const jsonResponse = await response.json();
+    return jsonResponse;
   } catch (error) {
-    // JSON 파싱 실패 시 (예: 응답이 비어있거나 다른 형식일 때)
-    console.error('Failed to parse JSON response:', error)
-    // 성공으로 간주하되, 데이터는 없다고 처리하거나 특정 상황에 맞게 처리
-    return { success: true, message: 'Operation successful, no JSON response.' }
+    console.error('Failed to parse JSON response for successful status:', error);
+    // response.ok가 true인데 JSON 파싱 실패는 여전히 문제입니다.
+    // logStore가 실패로 보고하도록 오류를 다시 throw합니다.
+    throw new Error('Server responded successfully but returned invalid JSON.');
   }
 }

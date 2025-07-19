@@ -126,7 +126,13 @@ onMounted(() => {
 
 <template>
   <main class="home-layout">
-    <FloatingSaveButton :status="saveStatus" :message="saveMessage" @save="handleSave" />
+    <FloatingSaveButton
+      :status="saveStatus"
+      :message="saveMessage"
+      @save="handleSave"
+      :has-unsaved-changes="logStore.hasUnsavedChanges"
+      text="保存"
+    />
     <div class="main-content">
       <div class="main-header">
         <h1>勤怠管理</h1>

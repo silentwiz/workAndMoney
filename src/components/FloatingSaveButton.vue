@@ -3,13 +3,14 @@
     <transition name="fade">
       <div v-if="message" :class="['save-message', status]">{{ message }}</div>
     </transition>
-    <button @click="handleClick" :class="['fab', status]" :disabled="status === 'saving'">
+    <button @click="handleClick" :class="['fab', status, { 'blink': hasUnsavedChanges && status === '' }]" :disabled="status === 'saving'">
       <transition name="fade" mode="out-in">
         <div v-if="status === 'saving'" class="spinner"></div>
         <span v-else-if="status === 'success'">✓</span>
         <span v-else-if="status === 'error'">✗</span>
-        <span v-else>💾</span>
+        <span v-else>☁️</span>
       </transition>
+      <span v-if="text" class="fab-text">{{ text }}</span>
     </button>
   </div>
 </template>
@@ -18,6 +19,8 @@
 const props = defineProps({
   status: String, // '', 'saving', 'success', 'error'
   message: String,
+  hasUnsavedChanges: Boolean, // ✨ 미저장 변경 사항 여부
+  text: String, // ✨ 버튼 텍스트
 })
 
 const emit = defineEmits(['save'])
@@ -40,19 +43,36 @@ const handleClick = () => {
 }
 
 .fab {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  width: 90px;   /* 120px * 0.75 */
+  height: 90px;  /* 120px * 0.75 */
+  border-radius: 45px; /* 60px * 0.75 */
   background-color: #42b883;
   color: white;
   border: none;
   display: flex;
+  flex-direction: column; /* 아이콘과 텍스트를 세로로 정렬 */
   justify-content: center;
   align-items: center;
-  font-size: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 36px; /* 48px * 0.75 */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); /* 0 8px 24px * 0.75 */
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.fab-text {
+  font-size: 14px; /* 18px * 0.75 (약 13.5px, 가독성을 위해 14px로 조정) */
+  margin-top: 5px; /* 아이콘과 텍스트 사이 간격 */
+}
+
+/* 깜빡임 애니메이션 */
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.fab.blink {
+  animation: blink 1s infinite;
 }
 
 .fab:hover {

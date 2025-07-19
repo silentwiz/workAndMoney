@@ -16,6 +16,7 @@ export const useLogStore = defineStore('log', () => {
   const attendanceLogs = ref({})
   const currentPage = ref(1)
   const itemsPerPage = ref(10)
+  const hasUnsavedChanges = ref(false) // ✨ 미저장 변경 사항 추적
 
   // ✨ 실시간 근무 기록 관련 상태
   const isTracking = ref(false)
@@ -214,7 +215,7 @@ export const useLogStore = defineStore('log', () => {
       }
       targetDateLogs.push(newLogData)
     }
-    await saveDataToServer()
+    hasUnsavedChanges.value = true // ✨ 변경 사항 발생 시 true로 설정
   }
 
   const paginatedLogs = computed(() => {
@@ -302,6 +303,7 @@ export const useLogStore = defineStore('log', () => {
 
     try {
       await saveData(userStore.currentUser, dataToSave)
+      hasUnsavedChanges.value = false // ✨ 성공적으로 저장되면 false로 설정
       return { success: true, message: '데이터가 성공적으로 저장되었습니다.' }
     } catch (error) {
       console.error('Failed to save data to server:', error)
@@ -360,5 +362,6 @@ export const useLogStore = defineStore('log', () => {
     startRest,
     endRest,
     endTracking,
+    hasUnsavedChanges, // ✨ 내보내기
   }
 })
