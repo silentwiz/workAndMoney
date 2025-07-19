@@ -76,7 +76,7 @@ const handleSubmit = () => {
 
 <template>
   <div>
-    <h3>{{ formattedDate }}の出勤記録 <span v-if="holidayName">({{ holidayName }})</span></h3>
+    <h3>{{ formattedDate }}の出勤記録 <span v-if="holidayName" class="holiday-name">{{ holidayName }}</span></h3>
     <div class="log-editor-form">
       <select v-model="selectedTagId">
         <option :value="null" disabled>職場選択</option>
@@ -114,6 +114,17 @@ const handleSubmit = () => {
   color: #e53935; /* 빨간색 */
   text-align: center;
   margin-top: 10px;
+}
+.holiday-display {
+  text-align: center;
+  margin-top: -10px; /* h3과의 간격 조절 */
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: #666;
+}
+.holiday-name {
+  color: red;
+  font-weight: bold;
 }
 h3 {
   text-align: center;

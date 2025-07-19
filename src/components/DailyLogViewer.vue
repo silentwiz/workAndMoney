@@ -10,6 +10,14 @@ const props = defineProps({
   logs: { type: Array, required: true }, // 해당 날짜의 근무 기록 배열
   date: { type: Date, required: true }, // 선택된 날짜
 })
+const formattedDate = computed(() => {
+  const date = props.date;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dayOfMonth}`;
+});
+
 const holidayName = computed(() => {
   const date = props.date
   const year = date.getFullYear()
@@ -23,7 +31,7 @@ const holidayName = computed(() => {
 <template>
   <div class="viewer-container">
     <h3>記録</h3>
-    <p>{{ date.toLocaleDateString('ja-JP') }} <span v-if="holidayName">({{ holidayName }})</span></p>
+    <p>{{ formattedDate }} <span v-if="holidayName" class="holiday-name">{{ holidayName }}</span></p>
     <ul class="log-list">
       <li v-for="log in logs" :key="log.id">
         <span>{{ log.start }} - {{ log.end }}</span>
@@ -70,5 +78,10 @@ li {
 }
 .delete-btn {
   background-color: #e53935; /* 빨간색 계열 */
+}
+.holiday-name {
+  color: red;
+  font-weight: bold;
+  margin-left: 5px;
 }
 </style>
