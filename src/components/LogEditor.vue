@@ -76,7 +76,8 @@ const handleSubmit = () => {
 
 <template>
   <div>
-    <h3>{{ formattedDate }}の出勤記録 <span v-if="holidayName" class="holiday-name">{{ holidayName }}</span></h3>
+    <h3>{{ formattedDate }}の出勤記録</h3>
+    <p v-if="holidayName" class="holiday-display holiday-name">{{ holidayName }}</p>
     <div class="log-editor-form">
       <select v-model="selectedTagId">
         <option :value="null" disabled>職場選択</option>

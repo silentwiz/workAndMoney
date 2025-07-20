@@ -1,4 +1,14 @@
 import { put, list } from '@vercel/blob'
+import compression from 'compression'
+
+// compression 미들웨어를 프로미스 기반으로 사용하기 위한 래퍼
+const compress = (req, res) =>
+  new Promise((resolve, reject) => {
+    compression()(req, res, (err) => {
+      if (err) return reject(err)
+      resolve()
+    })
+  })
 
 // 요청 본문을 비동기적으로 읽어오는 더 안정적인 함수
 async function getBody(request) {
@@ -9,7 +19,7 @@ async function getBody(request) {
   return Buffer.concat(chunks).toString()
 }
 
-export default async function handler(request, response) {
+async function handler(request, response) {
   const { user } = request.query
 
   if (!user) {
@@ -20,7 +30,7 @@ export default async function handler(request, response) {
 
   if (request.method === 'POST') {
     try {
-      const bodyString = request.body ? JSON.stringify(request.body) : await getBody(request);
+      const bodyString = request.body ? JSON.stringify(request.body) : await getBody(request)
 
       // 본문이 비어있는 경우 에러 처리
       if (!bodyString) {
@@ -46,7 +56,7 @@ export default async function handler(request, response) {
       console.error('User:', user)
       console.error('Request Headers:', JSON.stringify(request.headers, null, 2))
       console.error('Error Object:', error)
-      
+
       return response.status(500).json({
         message: 'Failed to save data due to an internal server error.',
         errorDetails: error.message,
@@ -55,6 +65,9 @@ export default async function handler(request, response) {
   } else {
     // GET 요청
     try {
+      // 압축 미들웨어 적용
+      await compress(request, response)
+
       const { blobs } = await list({ prefix: filename, limit: 1 })
 
       if (blobs.length === 0) {
@@ -80,3 +93,5 @@ export default async function handler(request, response) {
     }
   }
 }
+
+export default handler
