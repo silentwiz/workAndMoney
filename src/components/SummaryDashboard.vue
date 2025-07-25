@@ -37,6 +37,10 @@ const showYearlySummary = ref(false)
       <h4>今年の総支出</h4>
       <p class="yearly-total expense">{{ formatCurrency(logStore.yearlyExpenses) }}</p>
     </div>
+    <div class="summary-card">
+      <h4>今年の総純収入</h4>
+      <p class="yearly-total">{{ formatCurrency(logStore.netYearlyWage) }}</p>
+    </div>
   </div>
 </template>
 
@@ -93,11 +97,27 @@ const showYearlySummary = ref(false)
   display: flex;
   justify-content: space-between; /* ✨ 수정: space-around -> space-between */
 }
+.summary-card .income {
+  color: #42b883;
+}
+.summary-card .expense {
+  color: #e53935;
+}
 .income {
   color: #42b883;
 }
 .expense {
   color: #e53935;
+}
+.yearly-summary {
+  margin-top: 20px;
+  border-top: 2px dashed #e0e0e0;
+  padding-top: 20px;
+  /* 💡 데스크탑에서 3단으로 보이도록 그리드 템플릿 수정 */
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.yearly-total {
+  font-size: 24px !important;
 }
 
 /* --- 모바일 반응형 스타일 --- */

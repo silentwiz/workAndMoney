@@ -340,6 +340,8 @@ export const useLogStore = defineStore('log', () => {
     }, {})
   }
 
+  const netYearlyWage = computed(() => yearlyWage.value - yearlyExpenses.value)
+
   // watch(
   //   () => attendanceLogs.value,
   //   () => {
@@ -369,6 +371,7 @@ export const useLogStore = defineStore('log', () => {
     saveDataToServer,
     yearlyWage,
     yearlyExpenses,
+    netYearlyWage,
 
     // ✨ 실시간 근무 기록 관련 내보내기
     isTracking,
