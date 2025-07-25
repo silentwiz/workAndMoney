@@ -1,14 +1,49 @@
 <script setup>
+import { ref, computed } from 'vue'
 import { useTagStore } from '@/stores/tagStore'
-
-// ✨ 스토어를 가져오는 이 한 줄이면 모든 준비가 끝납니다.
-const tagStore = useTagStore()
-
+import { useSettingsStore } from '@/stores/settingsStore'
 import { formatCurrency } from '@/utils/formatters'
+
+const tagStore = useTagStore()
+const settingsStore = useSettingsStore()
+
+// ✨ 년/월 선택을 위한 상태 변수
+const selectedYear = ref(settingsStore.summaryDate.getFullYear())
+const selectedMonth = ref(settingsStore.summaryDate.getMonth() + 1)
+
+// ✨ 선택 가능한 년도 목록 (예: 5년 전부터 현재 년도까지)
+const yearOptions = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let i = currentYear; i >= currentYear - 5; i--) {
+    years.push(i)
+  }
+  return years
+})
+
+// ✨ 선택 가능한 월 목록
+const monthOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+// ✨ 날짜 선택 시 store의 상태를 업데이트하는 함수
+const onDateChange = () => {
+  settingsStore.setSummaryDate(selectedYear.value, selectedMonth.value)
+}
 </script>
 
 <template>
   <div class="summary-container">
+    <div class="date-controls">
+      <select v-model="selectedYear" @change="onDateChange">
+        <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}年</option>
+      </select>
+      <select v-model="selectedMonth" @change="onDateChange">
+        <option v-for="month in monthOptions" :key="month" :value="month">{{ month }}月</option>
+      </select>
+      <span>の給料＆支出</span>
+    </div>
+    <div v-if="tagStore.tagSummaries.length > 0" class="results-table"></div>
+    <div v-else class="no-data-message"></div>
+
     <div v-if="tagStore.tagSummaries.length > 0" class="results-table">
       <div class="result-row header">
         <span class="col-tag">職場</span>
@@ -24,8 +59,12 @@ import { formatCurrency } from '@/utils/formatters'
         </span>
         <span class="col-period" data-label="対象期間">{{ item.period }}</span>
         <span class="col-payday" data-label="給料日">毎月 {{ item.payday }}日</span>
-        <span class="col-income" data-label="予想給料">{{ formatCurrency(item.expectedIncome) }}</span>
-        <span class="col-expense" data-label="予想支出">{{ formatCurrency(item.expectedExpense) }}</span>
+        <span class="col-income" data-label="予想給料">{{
+          formatCurrency(item.expectedIncome)
+        }}</span>
+        <span class="col-expense" data-label="予想支出">{{
+          formatCurrency(item.expectedExpense)
+        }}</span>
       </div>
     </div>
     <div v-else class="no-data-message">

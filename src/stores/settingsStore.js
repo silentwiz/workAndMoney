@@ -6,9 +6,15 @@ import { useTagStore } from './tagStore'
 
 export const useSettingsStore = defineStore('settings', () => {
   const viewedDate = ref(new Date())
+  const summaryDate = ref(new Date())
 
   const setViewedDate = (date) => {
     viewedDate.value = date
+  }
+
+  const setSummaryDate = (year, month) => {
+    // month는 1-12 기반으로 받음
+    summaryDate.value = new Date(year, month - 1, 1)
   }
 
   const importUserData = (jsonData) => {
@@ -78,5 +84,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setViewedDate,
     importUserData,
     exportUserData,
+    summaryDate,
+    setSummaryDate,
   }
 })

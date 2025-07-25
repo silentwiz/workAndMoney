@@ -2,11 +2,12 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useLogStore } from './logStore'
 import { useHolidayService } from '../services/holidayService'
+import { useSettingsStore } from './settingsStore'
 
 export const useTagStore = defineStore('tag', () => {
   const tags = ref([])
   const { isHoliday, fetchHolidays } = useHolidayService()
-  fetchHolidays();
+  fetchHolidays()
 
   const addTag = (tagData) => {
     const newTag = {
@@ -46,114 +47,122 @@ export const useTagStore = defineStore('tag', () => {
   const getTagById = computed(() => (tagId) => tags.value.find((t) => t.id === tagId))
 
   const calculateWage = async (dateStr, start, end, tagId, restMinutes = 0) => {
-    const tag = tags.value.find((t) => t.id === tagId);
-    if (!tag) return { totalWage: 0, totalHours: 0 };
+    const tag = tags.value.find((t) => t.id === tagId)
+    if (!tag) return { totalWage: 0, totalHours: 0 }
 
-    let totalGrossWage = 0;
+    let totalGrossWage = 0
 
-    let startDate = new Date(`${dateStr}T${start}`);
-    let endDate = new Date(`${dateStr}T${end}`);
+    let startDate = new Date(`${dateStr}T${start}`)
+    let endDate = new Date(`${dateStr}T${end}`)
 
     if (endDate < startDate) {
-      endDate.setDate(endDate.getDate() + 1);
+      endDate.setDate(endDate.getDate() + 1)
     }
 
     const getRate = (currentDate) => {
-      const dayOfWeek = currentDate.getDay();
-      const hour = currentDate.getHours();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 일요일, 6: 토요일
-      const isHolidayDay = isHoliday(currentDate);
-      const isSpecialDay = isWeekend || isHolidayDay;
+      const dayOfWeek = currentDate.getDay()
+      const hour = currentDate.getHours()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6 // 0: 일요일, 6: 토요일
+      const isHolidayDay = isHoliday(currentDate)
+      const isSpecialDay = isWeekend || isHolidayDay
 
-      const isNight = tag.nightStartHour < tag.nightEndHour
-        ? (hour >= tag.nightStartHour && hour < tag.nightEndHour)
-        : (hour >= tag.nightStartHour || hour < tag.nightEndHour);
+      const isNight =
+        tag.nightStartHour < tag.nightEndHour
+          ? hour >= tag.nightStartHour && hour < tag.nightEndHour
+          : hour >= tag.nightStartHour || hour < tag.nightEndHour
 
       if (isSpecialDay && isNight) {
-        return tag.weekendNightRate;
+        return tag.weekendNightRate
       } else if (isSpecialDay) {
-        return tag.weekendRate;
+        return tag.weekendRate
       } else if (isNight) {
-        return tag.nightRate;
+        return tag.nightRate
       } else {
-        return tag.baseRate;
+        return tag.baseRate
       }
-    };
-
-    const eventPoints = new Set();
-    eventPoints.add(startDate.getTime());
-    eventPoints.add(endDate.getTime());
-
-    let tempDate = new Date(startDate);
-    while (tempDate < endDate) {
-      const nextDay = new Date(tempDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      nextDay.setHours(0, 0, 0, 0);
-
-      const nightStartToday = new Date(tempDate);
-      nightStartToday.setHours(tag.nightStartHour, 0, 0, 0);
-      if (nightStartToday >= startDate && nightStartToday < endDate) {
-        eventPoints.add(nightStartToday.getTime());
-      }
-
-      const nightEndToday = new Date(tempDate);
-      nightEndToday.setHours(tag.nightEndHour, 0, 0, 0);
-      if (nightEndToday >= startDate && nightEndToday < endDate) {
-        eventPoints.add(nightEndToday.getTime());
-      }
-
-      const nightStartNextDay = new Date(tempDate);
-      nightStartNextDay.setDate(nightStartNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1));
-      nightStartNextDay.setHours(tag.nightStartHour, 0, 0, 0);
-      if (nightStartNextDay >= startDate && nightStartNextDay < endDate) {
-        eventPoints.add(nightStartNextDay.getTime());
-      }
-
-      const nightEndNextDay = new Date(tempDate);
-      nightEndNextDay.setDate(nightEndNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1));
-      nightEndNextDay.setHours(tag.nightEndHour, 0, 0, 0);
-      if (nightEndNextDay >= startDate && nightEndNextDay < endDate) {
-        eventPoints.add(nightEndNextDay.getTime());
-      }
-
-      const midnight = new Date(tempDate);
-      midnight.setDate(midnight.getDate() + 1);
-      midnight.setHours(0, 0, 0, 0);
-      if (midnight > startDate && midnight < endDate) {
-        eventPoints.add(midnight.getTime());
-      }
-
-      tempDate = nextDay;
     }
 
-    const sortedEventPoints = Array.from(eventPoints).sort((a, b) => a - b);
+    const eventPoints = new Set()
+    eventPoints.add(startDate.getTime())
+    eventPoints.add(endDate.getTime())
+
+    let tempDate = new Date(startDate)
+    while (tempDate < endDate) {
+      const nextDay = new Date(tempDate)
+      nextDay.setDate(nextDay.getDate() + 1)
+      nextDay.setHours(0, 0, 0, 0)
+
+      const nightStartToday = new Date(tempDate)
+      nightStartToday.setHours(tag.nightStartHour, 0, 0, 0)
+      if (nightStartToday >= startDate && nightStartToday < endDate) {
+        eventPoints.add(nightStartToday.getTime())
+      }
+
+      const nightEndToday = new Date(tempDate)
+      nightEndToday.setHours(tag.nightEndHour, 0, 0, 0)
+      if (nightEndToday >= startDate && nightEndToday < endDate) {
+        eventPoints.add(nightEndToday.getTime())
+      }
+
+      const nightStartNextDay = new Date(tempDate)
+      nightStartNextDay.setDate(
+        nightStartNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1),
+      )
+      nightStartNextDay.setHours(tag.nightStartHour, 0, 0, 0)
+      if (nightStartNextDay >= startDate && nightStartNextDay < endDate) {
+        eventPoints.add(nightStartNextDay.getTime())
+      }
+
+      const nightEndNextDay = new Date(tempDate)
+      nightEndNextDay.setDate(
+        nightEndNextDay.getDate() + (tag.nightStartHour < tag.nightEndHour ? 0 : 1),
+      )
+      nightEndNextDay.setHours(tag.nightEndHour, 0, 0, 0)
+      if (nightEndNextDay >= startDate && nightEndNextDay < endDate) {
+        eventPoints.add(nightEndNextDay.getTime())
+      }
+
+      const midnight = new Date(tempDate)
+      midnight.setDate(midnight.getDate() + 1)
+      midnight.setHours(0, 0, 0, 0)
+      if (midnight > startDate && midnight < endDate) {
+        eventPoints.add(midnight.getTime())
+      }
+
+      tempDate = nextDay
+    }
+
+    const sortedEventPoints = Array.from(eventPoints).sort((a, b) => a - b)
 
     for (let i = 0; i < sortedEventPoints.length - 1; i++) {
-      const segmentStart = new Date(sortedEventPoints[i]);
-      const segmentEnd = new Date(sortedEventPoints[i + 1]);
+      const segmentStart = new Date(sortedEventPoints[i])
+      const segmentEnd = new Date(sortedEventPoints[i + 1])
 
       if (segmentStart >= endDate || segmentEnd <= startDate) {
-        continue;
+        continue
       }
 
-      const midPoint = new Date((segmentStart.getTime() + segmentEnd.getTime()) / 2);
-      const applicableRate = getRate(midPoint);
+      const midPoint = new Date((segmentStart.getTime() + segmentEnd.getTime()) / 2)
+      const applicableRate = getRate(midPoint)
 
-      const segmentDurationMinutes = (segmentEnd - segmentStart) / (1000 * 60);
-      totalGrossWage += (applicableRate / 60) * segmentDurationMinutes;
+      const segmentDurationMinutes = (segmentEnd - segmentStart) / (1000 * 60)
+      totalGrossWage += (applicableRate / 60) * segmentDurationMinutes
     }
 
-    const actualWorkedMinutes = (endDate - startDate) / (1000 * 60);
-    const payableMinutes = Math.max(0, actualWorkedMinutes - restMinutes);
+    const actualWorkedMinutes = (endDate - startDate) / (1000 * 60)
+    const payableMinutes = Math.max(0, actualWorkedMinutes - restMinutes)
 
-    const effectiveWage = actualWorkedMinutes > 0 ? (totalGrossWage / actualWorkedMinutes) * payableMinutes : 0;
+    const effectiveWage =
+      actualWorkedMinutes > 0 ? (totalGrossWage / actualWorkedMinutes) * payableMinutes : 0
 
-    return { totalWage: effectiveWage, totalHours: payableMinutes / 60 };
+    return { totalWage: effectiveWage, totalHours: payableMinutes / 60 }
   }
 
   const tagSummaries = computed(() => {
     const logStore = useLogStore()
+    const settingsStore = useSettingsStore()
     const today = new Date()
+    const targetDate = settingsStore.summaryDate
 
     return tags.value
       .map((tag) => {
@@ -162,10 +171,10 @@ export const useTagStore = defineStore('tag', () => {
           return null
         }
 
-        let endYear = today.getFullYear()
-        let endMonth = today.getMonth()
+        let endYear = targetDate.getFullYear()
+        let endMonth = targetDate.getMonth()
 
-        if (today.getDate() > closingDay) {
+        if (targetDate.getDate() > closingDay) {
           endMonth += 1
         }
 
