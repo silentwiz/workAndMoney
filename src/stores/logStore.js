@@ -61,9 +61,13 @@ export const useLogStore = defineStore('log', () => {
 
   // 상태 변경 감지 및 저장
   const debouncedSaveState = debounce(saveStateToLocalStorage, 200)
-  watch([isTracking, trackingStartTime, isResting, restStartTime, accumulatedRestMinutes], () => {
-    debouncedSaveState()
-  }, { deep: true })
+  watch(
+    [isTracking, trackingStartTime, isResting, restStartTime, accumulatedRestMinutes],
+    () => {
+      debouncedSaveState()
+    },
+    { deep: true },
+  )
 
   const goToPage = (pageNumber) => {
     currentPage.value = pageNumber
@@ -128,7 +132,7 @@ export const useLogStore = defineStore('log', () => {
     const today = endTime.toISOString().slice(0, 10)
 
     // 실시간 기록 중인 로그를 찾아서 업데이트
-    const liveLogIndex = attendanceLogs.value[today]?.findIndex(log => log.isLive)
+    const liveLogIndex = attendanceLogs.value[today]?.findIndex((log) => log.isLive)
 
     if (liveLogIndex > -1) {
       const liveLog = attendanceLogs.value[today][liveLogIndex]
@@ -288,6 +292,20 @@ export const useLogStore = defineStore('log', () => {
       .reduce((total, log) => total + log.dailyWage, 0)
   })
 
+  const yearlyWage = computed(() => {
+    const currentYear = new Date().getFullYear().toString()
+    return allLogsSorted.value
+      .filter((log) => log.date.startsWith(currentYear))
+      .reduce((total, log) => total + log.dailyWage, 0)
+  })
+
+  const yearlyExpenses = computed(() => {
+    const currentYear = new Date().getFullYear().toString()
+    return allLogsSorted.value
+      .filter((log) => log.date.startsWith(currentYear))
+      .reduce((total, log) => total + (log.expenses || 0), 0)
+  })
+
   const saveDataToServer = async () => {
     const userStore = useUserStore()
     const tagStore = useTagStore()
@@ -349,6 +367,8 @@ export const useLogStore = defineStore('log', () => {
     allLogsSorted,
     normalizeLogData,
     saveDataToServer,
+    yearlyWage,
+    yearlyExpenses,
 
     // ✨ 실시간 근무 기록 관련 내보내기
     isTracking,

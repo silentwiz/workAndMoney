@@ -1,9 +1,9 @@
 <script setup>
+import { ref } from 'vue'
 import { useLogStore } from '@/stores/logStore'
-
-const logStore = useLogStore()
-
 import { formatCurrency } from '@/utils/formatters'
+const logStore = useLogStore()
+const showYearlySummary = ref(false)
 </script>
 
 <template>
@@ -25,9 +25,44 @@ import { formatCurrency } from '@/utils/formatters'
       </div>
     </div>
   </div>
+  <div class="secret-button-container">
+    <button @click="showYearlySummary = !showYearlySummary">秘密</button>
+  </div>
+  <div v-if="showYearlySummary" class="dashboard yearly-summary">
+    <div class="summary-card">
+      <h4>今年の総収入</h4>
+      <p class="yearly-total income">{{ formatCurrency(logStore.yearlyWage) }}</p>
+    </div>
+    <div class="summary-card">
+      <h4>今年の総支出</h4>
+      <p class="yearly-total expense">{{ formatCurrency(logStore.yearlyExpenses) }}</p>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.secret-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 5px;
+}
+.secret-button-container button {
+  padding: 5px;
+  border-radius: 15px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  font-size: 9px;
+}
+.yearly-summary {
+  margin-top: 20px;
+  border-top: 2px dashed #e0e0e0;
+  padding-top: 20px;
+}
+.yearly-total {
+  font-size: 24px !important;
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: 1fr 1fr;
