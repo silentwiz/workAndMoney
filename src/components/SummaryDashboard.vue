@@ -25,9 +25,6 @@ const showYearlySummary = ref(false)
       </div>
     </div>
   </div>
-  <div class="secret-button-container">
-    <button @click="showYearlySummary = !showYearlySummary">秘密</button>
-  </div>
   <div v-if="showYearlySummary" class="dashboard yearly-summary">
     <div class="summary-card">
       <h4>今年の総収入</h4>
@@ -41,6 +38,9 @@ const showYearlySummary = ref(false)
       <h4>今年の総純収入</h4>
       <p class="yearly-total">{{ formatCurrency(logStore.netYearlyWage) }}</p>
     </div>
+  </div>
+  <div class="secret-button-container">
+    <button @click="showYearlySummary = !showYearlySummary">秘密</button>
   </div>
 </template>
 

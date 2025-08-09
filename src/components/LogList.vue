@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue'
+import SettingsEditor from '@/components/SettingsEditor.vue'
+import ShiftImporter from '@/components/ShiftImporter.vue' // import
 import { useLogStore } from '@/stores/logStore'
 import { useTagStore } from '@/stores/tagStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -125,6 +127,7 @@ const handleImport = () => {
   </div>
 
   <div class="section">
+    <ShiftImporter />
     <h3>💾データ管理</h3>
     <div class="input-group">
       <button @click="handleExport">データ保存</button>
