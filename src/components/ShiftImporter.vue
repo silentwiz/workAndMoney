@@ -19,16 +19,16 @@ const statusMessage = ref('') // 처리 결과 메시지
 const importAndSaveShifts = async () => {
   // 1. 기본 유효성 검사
   if (!selectedTagId.value) {
-    statusMessage.value = '먼저 직장을 선택해주세요.'
+    statusMessage.value = '職場を選択してください'
     return
   }
   const lines = shiftText.value.trim().split('\n')
   if (lines.length === 0 || shiftText.value.trim() === '') {
-    statusMessage.value = '입력된 데이터가 없습니다.'
+    statusMessage.value = '入力されたデータがありません'
     return
   }
 
-  statusMessage.value = '처리 중...'
+  statusMessage.value = '処理中。。。。。。'
   let successCount = 0
   let errorCount = 0
 
@@ -61,14 +61,14 @@ const importAndSaveShifts = async () => {
         await logStore.saveLog(logData)
         successCount++
       } catch (e) {
-        console.error(`로그 처리 실패 (line: ${line}):`, e)
+        console.error(`処理失敗(line: ${line}):`, e)
         errorCount++
       }
     }
   }
 
   // 6. 최종 결과 메시지 표시
-  statusMessage.value = `완료: ${successCount}건 성공, ${errorCount}건 실패`
+  statusMessage.value = `完了: ${successCount}件成功, ${errorCount}件失敗`
   if (errorCount === 0) {
     shiftText.value = '' // 성공 시 텍스트 초기화
   }
