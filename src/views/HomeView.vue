@@ -48,8 +48,8 @@ const handleSave = async () => {
 
 // 내보내기 버튼 핸들러
 const handleExport = () => {
-  const sortedLogs = logStore.allLogsSorted.sort((a, b) => new Date(a.date + 'T' + a.start) - new Date(b.date + 'T' + b.start));
-  exportedText.value = formatLogsForExport(sortedLogs)
+  const sortedLogs = [...logStore.allLogsSorted].sort((a, b) => new Date(a.date + 'T' + a.start) - new Date(b.date + 'T' + b.start));
+  exportedText.value = formatLogsForExport(sortedLogs, tagStore.tags)
   isExportModalOpen.value = true
 }
 
