@@ -1,26 +1,29 @@
 <script setup>
-import { ref, onUnmounted, onMounted } from 'vue'
+import { ref, onUnmounted, onMounted, computed } from 'vue' // computed 추가
 import SummaryDashboard from '@/components/SummaryDashboard.vue'
 import AttendanceCalendar from '@/components/AttendanceCalendar.vue'
 import LogList from '@/components/LogList.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import SettingsEditor from '@/components/SettingsEditor.vue'
 import TagSummary from '@/components/TagSummary.vue'
-import FloatingSaveButton from '@/components/FloatingSaveButton.vue' // ✨ 플로팅 버튼 import
+import FloatingSaveButton from '@/components/FloatingSaveButton.vue'
 import { useLogStore } from '@/stores/logStore'
 import { useTagStore } from '@/stores/tagStore'
+import { formatLogsForExport } from '@/utils/formatters' // formatters import
 
 const logStore = useLogStore()
 const tagStore = useTagStore()
 
 const isSettingsModalOpen = ref(false)
+const isExportModalOpen = ref(false) // 내보내기 모달 상태
+const exportedText = ref('') // 내보낼 텍스트
 const showLiveControls = ref(false)
 
-// ✨ 저장 피드백 관련 상태
+// 저장 피드백 관련 상태
 const saveStatus = ref('') // '', 'saving', 'success', 'error'
 const saveMessage = ref('')
 
-// ✨ 실시간 근무 기록 관련 상태 및 함수
+// 실시간 근무 기록 관련 상태 및 함수
 const selectedLiveTagId = ref(null)
 const liveStatusMessage = ref('待機中')
 const liveWorkedTime = ref('00:00:00')
@@ -41,6 +44,13 @@ const handleSave = async () => {
     saveStatus.value = ''
     saveMessage.value = ''
   }, 3000)
+}
+
+// 내보내기 버튼 핸들러
+const handleExport = () => {
+  const sortedLogs = logStore.allLogsSorted.sort((a, b) => new Date(a.date + 'T' + a.start) - new Date(b.date + 'T' + b.start));
+  exportedText.value = formatLogsForExport(sortedLogs)
+  isExportModalOpen.value = true
 }
 
 const updateLiveTime = () => {
@@ -137,6 +147,7 @@ onMounted(() => {
       <div class="main-header">
         <h1>勤怠管理</h1>
         <div class="header-controls">
+          <button class="export-button" @click="handleExport">📤 エクスポート</button>
           <button class="settings-button" @click="isSettingsModalOpen = true">⚙️設定</button>
         </div>
       </div>
@@ -180,6 +191,15 @@ onMounted(() => {
     <BaseModal :show="isSettingsModalOpen" @close="isSettingsModalOpen = false">
       <SettingsEditor />
     </BaseModal>
+
+    <!-- 내보내기 모달 -->
+    <BaseModal :show="isExportModalOpen" @close="isExportModalOpen = false">
+      <div class="export-modal-content">
+        <h3>勤務記録のエクスポート</h3>
+        <p>以下のテキストをコピーして使用してください。</p>
+        <textarea readonly :value="exportedText" rows="15"></textarea>
+      </div>
+    </BaseModal>
   </main>
 </template>
 
@@ -219,7 +239,8 @@ h1 {
   margin: 0;
 }
 
-.settings-button {
+.settings-button,
+.export-button {
   padding: 8px 12px;
   font-size: 14px;
   background-color: #f0f2f5;
@@ -302,6 +323,27 @@ h1 {
 .control-buttons button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 내보내기 모달 스타일 */
+.export-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.export-modal-content h3 {
+  margin: 0;
+  text-align: center;
+}
+.export-modal-content textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'monospace';
+  white-space: pre;
+  box-sizing: border-box;
 }
 
 /* 데스크탑 레이아웃 */
